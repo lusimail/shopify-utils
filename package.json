@@ -1,12 +1,16 @@
 {
-  "name": "shopify-scripts",
+  "name": "shopify-utils",
   "version": "1.0.0",
-  "description": "",
+  "description": "Utility scripts for Shopify",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lusimail/shopify-utils"
+  },
+  "author": "Lusia Kristiana Purnama <lusiakpurnama@gmail.com>",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.19.2",
