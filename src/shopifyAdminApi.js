@@ -39,10 +39,10 @@ const getWithMap = (auth, path, param, prop = '', attrs = []) => apiGet(auth, pa
 		return mapped;
 	});
 
-const getToFile = (auth, path, param, prop, attrs, resultPath) => getWithMap(auth, path, param, prop, attrs)
+const getToFile = (auth, path, param, prop, attrs, filePath) => getWithMap(auth, path, param, prop, attrs)
 	.then((result) => {
-		mkdirp.sync(resultPath.split('/').slice(0, -1).join('/'));
-		fs.writeFileSync(resultPath, JSON.stringify(result, null, 2));
+		mkdirp.sync(filePath.split('/').slice(0, -1).join('/'));
+		fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
 		return result;
 	});
 
