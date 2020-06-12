@@ -1,0 +1,7 @@
+.DS_Store
+.idea
+.cache
+node_modules
+config/*
+!config/default.example.js
+files
