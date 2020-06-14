@@ -16,3 +16,20 @@ Price rules that have more than 1 discount code is possibly created by an app.<b
 `Product Id`, `Variant Id` and `Collection Id` will be mapped to the new store's ids, but other settings will need to be set manually in the admin panel
 1. In your private app, make sure you have these permissions: `read_products`, `write_products`, `read_price_rules`, `write_price_rules`, `read_discounts`, `write_discounts`
 2. Run `npm run copyDiscounts <storeFrom> <storeTo>`
+
+### Analyze Shopify theme
+To see how many files the theme have and which snippet or section files are not included / rendered.
+Please note that snippets that are not rendered might be rendered from a liquid variable.<br>
+Run `npm run analyzeTheme <path/to/theme>`. Example:
+```
+npm run analyzeTheme ~/shopify-theme
+```
+
+### Analyze Shopify theme file
+To see approximately how the liquid file will be after injected with the `include`/`render`/`section`.
+This will also output how many forloops are in the file.<br>
+Run `npm run analyzeThemeFile <path/to/theme> <folder> <filenameToCompile>`. Example:
+```
+npm run analyzeThemeFile ~/shopify-theme layout theme.liquid
+npm run analyzeThemeFile ~/shopify-theme templates/customers account.liquid
+```

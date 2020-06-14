@@ -9,7 +9,7 @@ const storeFrom = args[0];
 const storeTo = args[1];
 
 if (_.isEmpty(storeFrom) || _.isEmpty(storeFrom)) {
-	console.log('Example usage: node copyDiscounts.js <storeFrom> <storeTo>');
+	console.log('Example usage: npm run copyDiscounts <storeFrom> <storeTo>');
 	process.exit(1);
 }
 

@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "downloadFiles": "node src/downloadFiles.js",
-    "copyDiscounts": "node src/copyDiscounts.js"
+    "copyDiscounts": "node src/copyDiscounts.js",
+    "analyzeTheme": "node src/analyzeTheme.js",
+    "analyzeThemeFile": "node src/analyzeThemeFile.js"
   },
   "repository": {
     "type": "git",

@@ -34,5 +34,6 @@ module.exports = {
 		'global-require': 0,
 		camelcase: 0,
 		'arrow-body-style': 1,
+		'class-methods-use-this': 0,
 	},
 };
