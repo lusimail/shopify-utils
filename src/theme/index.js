@@ -99,14 +99,14 @@ class ShopifyTheme {
 					this.snippets.loopCall.push(filename);
 					result.filename = filename;
 				} else if (!_.includes(this.filenames.snippets, filename)) {
-					this.includesNotFile.push(tag);
+					this.includesNotFile.push(tag.tag);
 				} else {
 					if (!_.includes(this.snippets.used, filename)) this.snippets.used.push(filename);
 					result.filename = filename;
 				}
 			} else if (tag.type === 'section') {
 				if (!_.includes(this.filenames.sections, filename)) {
-					this.sectionsNotFile.push(tag);
+					this.sectionsNotFile.push(tag.tag);
 				} else {
 					if (!_.includes(this.sections.used, filename)) this.sections.used.push(filename);
 					result.filename = filename;
