@@ -12,6 +12,8 @@ if (_.isEmpty(pathToTheme)) {
 }
 
 const theme = new ShopifyTheme(pathToTheme);
+theme.checkIncludesAndSections();
+theme.checkAssetFiles();
 let resultText = '';
 resultText += 'File statistic:\n';
 resultText += JSON.stringify(theme.themeStats, null, 2);
@@ -21,6 +23,22 @@ resultText += `js: ${theme.assets.js.length}\n`;
 resultText += `css: ${theme.assets.css.length}\n`;
 resultText += `other: ${theme.assets.other.length}\n`;
 resultText += '\n\n\n';
+
+if (!_.isEmpty(theme.assets.unused.js)) {
+	resultText += 'JS files not called in liquid files:\n';
+	resultText += theme.assets.unused.js.join('\n');
+	resultText += '\n\n\n';
+}
+if (!_.isEmpty(theme.assets.unused.css)) {
+	resultText += 'CSS files not called in liquid files:\n';
+	resultText += theme.assets.unused.css.join('\n');
+	resultText += '\n\n\n';
+}
+if (!_.isEmpty(theme.assets.unused.other)) {
+	resultText += 'Other asset files not called in liquid files:\n';
+	resultText += theme.assets.unused.other.join('\n');
+	resultText += '\n\n\n';
+}
 
 if (!_.isEmpty(theme.includesNotFile)) {
 	resultText += 'Snippet render from variables or with non existent file:\n';

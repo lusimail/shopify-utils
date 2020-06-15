@@ -26,9 +26,6 @@ class ShopifyTheme {
 
 		this.readThemeFiles();
 		this.processSections();
-		this.checkIncludesAndSections();
-		this.snippets.unused = _.without(this.filenames.snippets, ...this.snippets.used);
-		this.sections.unused = _.without(this.filenames.sections, ...this.sections.used, ...this.sections.preset);
 	}
 
 	readThemeFiles() {
@@ -129,13 +126,38 @@ class ShopifyTheme {
 		});
 		this.includesNotFile = _.uniq(this.includesNotFile);
 		this.sectionsNotFile = _.uniq(this.sectionsNotFile);
+		this.snippets.unused = _.without(this.filenames.snippets, ...this.snippets.used);
+		this.sections.unused = _.without(this.filenames.sections, ...this.sections.used, ...this.sections.preset);
+	}
+
+	checkAssetFiles() {
+		this.assets.used = { js: [], css: [], other: [] };
+		this.assets.unused = { js: [], css: [], other: [] };
+		_.forEach(['js', 'css', 'other'], (type) => {
+			_.forEach(this.assets[type], (asset) => {
+				const filename = _.replace(asset, /.liquid$/, '');
+				let used = false;
+				_.forEach(FOLDER_TO_CHECK, (folder) => {
+					_.forEach(this.filenames[folder], (file) => {
+						used = _.includes(this.files[folder][file].content, filename);
+						return !used;
+					});
+					return !used;
+				});
+				if (used) {
+					this.assets.used[type].push(asset);
+				} else { this.assets.unused[type].push(asset); }
+			});
+		});
 	}
 
 	compileFile(folder, file) {
 		const fileDetail = this.files[folder][file];
 		if (_.isEmpty(fileDetail)) { return { compiled: `<!-- file not exist: ${folder}/${file} -->` }; }
-		const { content, liquidTag } = fileDetail;
-		if (!_.isEmpty(fileDetail.compiled)) return fileDetail;
+		const { content } = fileDetail;
+		if (!_.isEmpty(fileDetail.compiled)) { return fileDetail; }
+		if (_.isEmpty(fileDetail.liquidTag)) { this.processLiquidFile(folder, file); }
+		const { liquidTag } = fileDetail;
 		let result = content;
 		let totSnippets = 0;
 		let totSections = 0;
