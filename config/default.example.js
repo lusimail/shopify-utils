@@ -9,7 +9,4 @@ module.exports = {
 		apiPass: 'API_PASS_2',
 		hostname: 'store2.myshopify.com',
 	},
-}
-
-
-
+};

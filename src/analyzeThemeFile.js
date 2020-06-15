@@ -15,11 +15,13 @@ if (_.isEmpty(pathToTheme) || _.isEmpty(folderToCompile) || _.isEmpty(fileToComp
 
 const theme = new ShopifyTheme(pathToTheme);
 const {
-	compileResult, totalFor, maxFor, minFor,
+	compiled, totalFor, maxFor, minFor, totalSnippets, totalSections,
 } = theme.analyzeFile(folderToCompile, fileToCompile);
 
-fs.writeFileSync(compilePath, compileResult);
+fs.writeFileSync(compilePath, compiled);
 console.log('Done, compile result in:', compilePath);
+console.log('Total snippets:', totalSnippets);
+console.log('Total sections:', totalSections);
 console.log('Total for loop:', totalFor);
 console.log('Max for loop:', maxFor);
 console.log('Min for loop:', minFor);

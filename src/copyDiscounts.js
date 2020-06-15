@@ -169,14 +169,14 @@ Promise.all(promises)
 			if (discounts.length > 1) {
 				console.log('Price rule:', ruleFrom.id, ruleFrom.title, 'have more than 1 discount code, possibly created from an app. Skipping rule.');
 			} else {
-				// apiPost(authTo, 'price_rules.json', { price_rule: makeRule(ruleFrom) })
-				// 	.then(({ price_rule: ruleTo }) => {
-				// 		console.log('Price rule created:', ruleTo.id, ruleTo.title);
-				// 		apiPost(authTo, `price_rules/${ruleTo.id}/discount_codes.json`, { discount_code: { code: ruleTo.title } })
-				// 			.then(() => {
-				// 				console.log('Discount code created:', ruleTo.title);
-				// 			}).catch((err) => console.log('Discount code error:', ruleTo.title, err.toJSON()));
-				// 	}).catch((err) => console.log('Price rule error:', ruleFrom.title, err.toJSON()));
+				apiPost(authTo, 'price_rules.json', { price_rule: makeRule(ruleFrom) })
+					.then(({ price_rule: ruleTo }) => {
+						console.log('Price rule created:', ruleTo.id, ruleTo.title);
+						apiPost(authTo, `price_rules/${ruleTo.id}/discount_codes.json`, { discount_code: { code: ruleTo.title } })
+							.then(() => {
+								console.log('Discount code created:', ruleTo.title);
+							}).catch((err) => console.log('Discount code error:', ruleTo.title, err.toJSON()));
+					}).catch((err) => console.log('Price rule error:', ruleFrom.title, err.toJSON()));
 			}
 		});
 	});
