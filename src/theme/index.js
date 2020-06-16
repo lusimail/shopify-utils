@@ -182,10 +182,12 @@ class ShopifyTheme {
 
 	analyzeFile(folder, file) {
 		const { compiled, totalSnippets, totalSections } = this.compileFile(folder, file);
-		const { totalFor, maxFor, minFor } = this.analyzeForLoop(compiled);
+		const {
+			totalFor, forOutsideIf, maxFor, minFor,
+		} = this.analyzeForLoop(compiled);
 
 		return {
-			compiled, totalFor, maxFor, minFor, totalSnippets, totalSections,
+			compiled, forOutsideIf, totalFor, maxFor, minFor, totalSnippets, totalSections,
 		};
 	}
 
@@ -206,6 +208,7 @@ class ShopifyTheme {
 			return { totalFor, maxFor: 0, minFor: 0 };
 		}
 
+		let forOutsideIf = 0;
 		let maxFor = 0;
 		let minFor = 0;
 		const ifBlock = [];
@@ -250,6 +253,7 @@ class ShopifyTheme {
 				}
 			} else if (tag.type === 'for') {
 				if (_.isEmpty(currentIf)) {
+					forOutsideIf += 1;
 					maxFor += 1;
 					minFor += 1;
 				} else {
@@ -259,7 +263,9 @@ class ShopifyTheme {
 				// console.log(`${_.padStart('', level * 2)}${tag.tag}`);
 			}
 		});
-		return { totalFor, maxFor, minFor };
+		return {
+			totalFor, forOutsideIf, maxFor, minFor,
+		};
 	}
 }
 

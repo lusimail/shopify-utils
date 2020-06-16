@@ -15,7 +15,7 @@ if (_.isEmpty(pathToTheme) || _.isEmpty(folderToCompile) || _.isEmpty(fileToComp
 
 const theme = new ShopifyTheme(pathToTheme);
 const {
-	compiled, totalFor, maxFor, minFor, totalSnippets, totalSections,
+	compiled, totalFor, forOutsideIf, maxFor, minFor, totalSnippets, totalSections,
 } = theme.analyzeFile(folderToCompile, fileToCompile);
 
 fs.writeFileSync(compilePath, compiled);
@@ -23,5 +23,6 @@ console.log('Done, compile result in:', compilePath);
 console.log('Total snippets:', totalSnippets);
 console.log('Total sections:', totalSections);
 console.log('Total for loop:', totalFor);
+console.log('For loop outside if tag:', forOutsideIf);
 console.log('Max for loop:', maxFor);
 console.log('Min for loop:', minFor);
