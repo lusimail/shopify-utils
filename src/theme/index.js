@@ -5,7 +5,9 @@ const FOLDER_THEME = ['config', 'layout', 'locales', 'sections', 'snippets', 'te
 const FOLDER_TO_CHECK = ['layout', 'sections', 'snippets', 'templates', 'templates/customers'];
 const REGEXP_JS = /(.js|.js.liquid)$/g;
 const REGEXP_CSS = /(.css|.css.liquid|.scss|.scss.liquid)$/g;
-const REGEXP_LIQUID_TAG = /{%.*?%}/g;
+const REGEXP_LIQUID_TAG = /{%[^]*?%}/g;
+const REGEXP_ASSET_TAG = /(?<={{|{%).*?\|\s{0,3}(asset_url|asset_img_url)(?=[^a-z_-].*?(}}|%}))/gi;
+const REGEXP_ASSET_URL = /cdn.shopify.com\/s\/files.*?\/assets\/[^?'")\n]*/g;
 const REGEXP_QUOTED = /(?<=['"`]).*?(?=['"`])/;
 const REGEXP_COMMENT = /{%[\s-]{0,3}comment[^]*?endcomment[\s-]{0,3}%}/g;
 const REGEXP_SCHEMA = /{%[\s-]{0,3}schema[^]*?endschema[\s-]{0,3}%}/g;
@@ -28,11 +30,29 @@ class ShopifyTheme {
 		this.processSections();
 	}
 
+	readFileContent(folder, filename, path) {
+		let content;
+		try {
+			content = fs.readFileSync(`${path}/${filename}`, { encoding: 'utf-8' });
+		} catch (error) {
+			console.log(`Read file error ${folder}/${filename}: ${error}`);
+			content = '';
+		}
+		content = _.replace(content, REGEXP_COMMENT, '');
+		return content;
+	}
+
 	readThemeFiles() {
 		this.readAssetFiles();
 		_.forEach(FOLDER_THEME, (folder) => {
 			const path = `${this.pathToTheme}/${folder}`;
-			const filenames = fs.readdirSync(path);
+			let filenames;
+			try {
+				filenames = fs.readdirSync(path);
+			} catch (error) {
+				console.log(`folder ${folder} error: ${error}`);
+				filenames = [];
+			}
 			this.files[folder] = {};
 			this.filenames[folder] = filenames;
 			if (folder === 'templates') _.remove(filenames, (n) => n === 'customers');
@@ -41,21 +61,28 @@ class ShopifyTheme {
 			this.themeStats.totalFiles += filenames.length;
 
 			_.forEach(filenames, (filename) => {
-				let content = fs.readFileSync(`${path}/${filename}`, { encoding: 'utf-8' });
-				content = _.replace(content, REGEXP_COMMENT, '');
-				this.files[folder][filename] = { content };
+				this.files[folder][filename] = { content: this.readFileContent(folder, filename, path) };
 			});
 		});
 	}
 
 	readAssetFiles() {
 		const path = `${this.pathToTheme}/assets`;
-		this.filenames.assets = fs.readdirSync(path);
+		try {
+			this.filenames.assets = fs.readdirSync(path);
+		} catch (error) {
+			console.log('folder assets error:', error);
+			this.filenames.assets = [];
+		}
 		this.themeStats.folder.assets = this.filenames.assets.length;
 		this.themeStats.totalFiles += this.filenames.assets.length;
 		this.assets.js = _.filter(this.filenames.assets, (n) => n.match(REGEXP_JS));
 		this.assets.css = _.filter(this.filenames.assets, (n) => n.match(REGEXP_CSS));
 		this.assets.other = _.filter(this.filenames.assets, (n) => !n.match(REGEXP_JS) && !n.match(REGEXP_CSS));
+		this.files.assets = [];
+		_.forEach([...this.assets.js, ...this.assets.css], (filename) => {
+			this.files.assets[filename] = { content: this.readFileContent('assets', filename, path) };
+		});
 	}
 
 	processSections() {
@@ -84,6 +111,22 @@ class ShopifyTheme {
 			split = _.split(split, /[\s,;]+/);
 			return { tag, type: split[0], split };
 		});
+	}
+
+	getAssetTags() {
+		this.allAssetTag = [];
+		this.allAssetUrl = [];
+		_.forEach(['assets', ...FOLDER_TO_CHECK], (folder) => {
+			_.forEach(this.filenames[folder], (file) => {
+				const content = this.files[folder][file] && this.files[folder][file].content ? this.files[folder][file].content : '';
+				const tags = content.match(REGEXP_ASSET_TAG);
+				const urls = content.match(REGEXP_ASSET_URL);
+				if (tags) { this.allAssetTag = [...this.allAssetTag, ..._.map(tags, _.trim)]; }
+				if (urls) { this.allAssetUrl = [...this.allAssetUrl, ...urls]; }
+			});
+		});
+		this.allAssetTag = _.uniq(this.allAssetTag);
+		this.allAssetUrl = _.uniq(this.allAssetUrl);
 	}
 
 	processLiquidFile(folder, file) {
@@ -131,24 +174,24 @@ class ShopifyTheme {
 	}
 
 	checkAssetFiles() {
+		this.assets.tags = { used: [], unused: [] };
 		this.assets.used = { js: [], css: [], other: [] };
 		this.assets.unused = { js: [], css: [], other: [] };
+		this.getAssetTags();
+		const allTags = [...this.allAssetTag, ...this.allAssetUrl];
 		_.forEach(['js', 'css', 'other'], (type) => {
 			_.forEach(this.assets[type], (asset) => {
 				const filename = _.replace(asset, /.liquid$/, '');
-				let used = false;
-				_.forEach(FOLDER_TO_CHECK, (folder) => {
-					_.forEach(this.filenames[folder], (file) => {
-						used = _.includes(this.files[folder][file].content, filename);
-						return !used;
-					});
-					return !used;
-				});
-				if (used) {
+				const tags = _.filter(allTags, (tag) => _.includes(tag, filename));
+				if (_.isEmpty(tags)) {
+					this.assets.unused[type].push(asset);
+				} else {
 					this.assets.used[type].push(asset);
-				} else { this.assets.unused[type].push(asset); }
+					this.assets.tags.used = _.union(this.assets.tags.used, tags);
+				}
 			});
 		});
+		this.assets.tags.unused = _.without(allTags, ...this.assets.tags.used);
 	}
 
 	compileFile(folder, file) {

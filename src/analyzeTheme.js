@@ -15,6 +15,15 @@ const theme = new ShopifyTheme(pathToTheme);
 theme.checkIncludesAndSections();
 theme.checkAssetFiles();
 let resultText = '';
+
+const print = (title, items) => {
+	if (!_.isEmpty(items)) {
+		resultText += `${title} (${items.length}):\n`;
+		resultText += items.join('\n');
+		resultText += '\n\n\n';
+	}
+};
+
 resultText += 'File statistic:\n';
 resultText += JSON.stringify(theme.themeStats, null, 2);
 resultText += '\n\n';
@@ -24,41 +33,31 @@ resultText += `css: ${theme.assets.css.length}\n`;
 resultText += `other: ${theme.assets.other.length}\n`;
 resultText += '\n\n\n';
 
-if (!_.isEmpty(theme.includesNotFile)) {
-	resultText += 'Snippet render from variables or with non existent file:\n';
-	resultText += theme.includesNotFile.join('\n');
-	resultText += '\n\n\n';
-}
-
-if (!_.isEmpty(theme.sectionsNotFile)) {
-	resultText += 'Sections includes with variables:\n';
-	resultText += theme.sectionsNotFile.join('\n');
-	resultText += '\n\n\n';
-}
-
-resultText += 'Snippets not rendered:\n';
-resultText += theme.snippets.unused.join('\n');
+resultText += '==================================================\n';
+resultText += '     Unused Files\n';
+resultText += '==================================================\n';
 resultText += '\n\n\n';
 
-resultText += 'Sections not rendered and not for homepage (no preset in schema):\n';
-resultText += theme.sections.unused.join('\n');
+print('Snippet render from variables or non existent file', theme.includesNotFile);
+print('Sections includes with variables', theme.sectionsNotFile);
+print('Snippets not rendered', theme.snippets.unused);
+print('Sections not rendered and not for homepage (no preset in schema)', theme.sections.unused);
+print('Asset call with variable or non existent file', theme.assets.tags.unused);
+print('JS files not called with `asset_url` or `cdn.shopify.com`', theme.assets.unused.js);
+print('CSS files not called with `asset_url` or `cdn.shopify.com`', theme.assets.unused.css);
+print('Other asset files not called with `asset_url` or `cdn.shopify.com`', theme.assets.unused.other);
+
+resultText += '==================================================\n';
+resultText += '     Used Files\n';
+resultText += '==================================================\n';
 resultText += '\n\n\n';
 
-if (!_.isEmpty(theme.assets.unused.js)) {
-	resultText += 'JS files not called in liquid files:\n';
-	resultText += theme.assets.unused.js.join('\n');
-	resultText += '\n\n\n';
-}
-if (!_.isEmpty(theme.assets.unused.css)) {
-	resultText += 'CSS files not called in liquid files:\n';
-	resultText += theme.assets.unused.css.join('\n');
-	resultText += '\n\n\n';
-}
-if (!_.isEmpty(theme.assets.unused.other)) {
-	resultText += 'Other asset files not called in liquid files:\n';
-	resultText += theme.assets.unused.other.join('\n');
-	resultText += '\n\n\n';
-}
+// print('Snippets rendered', theme.snippets.used);
+// print('Sections rendered', theme.sections.used);
+// print('Sections with preset', theme.sections.preset);
+print('JS files used', theme.assets.used.js);
+print('CSS files used', theme.assets.used.css);
+print('Other asset files used', theme.assets.used.other);
 
 fs.writeFileSync(resultPath, resultText);
 console.log('Done, result in:', resultPath);
