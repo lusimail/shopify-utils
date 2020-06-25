@@ -36,3 +36,11 @@ Run `npm run analyzeThemeFile <path/to/theme> <folder> <filenameToCompile>`. Exa
 npm run analyzeThemeFile ~/shopify-theme layout theme.liquid
 npm run analyzeThemeFile ~/shopify-theme templates/customers account.liquid
 ```
+
+## Adjust theme settings for another store
+In `settings_data.json`, sometimes there are `product Id`, `variant Id` or `collection Id`.
+Duplicating theme to another store, will need adjustment on these ids.<br>
+Run `npm run adjustThemeSettings <storeFrom> <storeTo> <settingFilePath>`. Example:
+```
+npm run adjustThemeSettings store1 store2  ~/shopify-theme/config/settings_data.json
+```

@@ -8,7 +8,8 @@
     "downloadFiles": "node src/downloadFiles.js",
     "copyDiscounts": "node src/copyDiscounts.js",
     "analyzeTheme": "node src/analyzeTheme.js",
-    "analyzeThemeFile": "node src/analyzeThemeFile.js"
+    "analyzeThemeFile": "node src/analyzeThemeFile.js",
+    "adjustThemeSettings": "node src/adjustThemeSettings.js"
   },
   "repository": {
     "type": "git",
