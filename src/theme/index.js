@@ -6,7 +6,7 @@ const FOLDER_TO_CHECK = ['layout', 'sections', 'snippets', 'templates', 'templat
 const REGEXP_JS = /(.js|.js.liquid)$/g;
 const REGEXP_CSS = /(.css|.css.liquid|.scss|.scss.liquid)$/g;
 const REGEXP_LIQUID_TAG = /{%[^]*?%}/g;
-const REGEXP_ASSET_TAG = /(?<={{|{%).*?\|\s{0,3}(asset_url|asset_img_url)(?=[^a-z_-].*?(}}|%}))/gi;
+const REGEXP_ASSET_TAG = /(?<={{|{%).*?\|\s{0,3}(asset_url|asset_img_url)(?=[^a-z_-]?.*?(}}|%}))/gi;
 const REGEXP_ASSET_URL = /cdn.shopify.com\/s\/files.*?\/assets\/[^?'")\n]*/g;
 const REGEXP_QUOTED = /(?<=['"`]).*?(?=['"`])/;
 const REGEXP_COMMENT = /{%[\s-]{0,3}comment[^]*?endcomment[\s-]{0,3}%}/g;
@@ -92,7 +92,12 @@ class ShopifyTheme {
 			const json = content.match(REGEXP_SCHEMA_JSON);
 			this.files.sections[file].content = _.replace(content, REGEXP_SCHEMA, '');
 			if (!_.isEmpty(json)) {
-				const schema = JSON.parse(json);
+				let schema = {};
+				try {
+					schema = JSON.parse(json);
+				} catch (error) {
+					console.log(`Schema parse error: sections/${file}`);
+				}
 				this.files.sections[file].schema = schema;
 				if (!_.isEmpty(schema.presets)) {
 					this.sections.preset.push(file);
