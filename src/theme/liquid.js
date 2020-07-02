@@ -1,0 +1,97 @@
+const _ = require('lodash');
+const fs = require('fs');
+const { getLiquidTags, getAssetUrls, removeCommentBlock } = require('./helper');
+
+const REGEXP_JS = /(.js|.js.liquid)$/g;
+const REGEXP_CSS = /(.css|.css.liquid|.scss|.scss.liquid)$/g;
+const REGEXP_SCHEMA = /{%[\s-]*?schema[^]*?endschema[\s-]*?%}/g;
+const REGEXP_SCHEMA_JSON = /(?<={%[\s-]*?schema[\s-]*?%})[^]*?(?={%[\s-]*?endschema[\s-]*?%})/g;
+
+class LiquidFile {
+	constructor(folder, filename, path) {
+		this.path = path;
+		this.folder = folder;
+		this.filename = filename;
+		if (_.includes(this.filename, 'scss.liquid')) {
+			this.basename = _.replace(this.filename, /scss.liquid$/, 'scss.css');
+		} else {
+			this.basename = _.replace(this.filename, /.liquid$/, '');
+		}
+
+		if (this.folder === 'assets') {
+			if (this.filename.match(REGEXP_JS)) {
+				this.assetType = 'js';
+			} else if (this.filename.match(REGEXP_CSS)) {
+				this.assetType = 'css';
+			} else {
+				this.assetType = 'other';
+			}
+		}
+
+		if (this.folder !== 'assets' || this.assetType !== 'other') {
+			this.readFileContent();
+			this.analyzeContent();
+		}
+
+		this.isRendered = false;
+	}
+
+	readFileContent() {
+		this.content = '';
+		try {
+			this.content = fs.readFileSync(`${this.path}/${this.filename}`, { encoding: 'utf-8' });
+		} catch (error) {
+			console.log(`Read file error ${this.folder}/${this.filename}: ${error}`);
+		}
+		this.content = removeCommentBlock(this.content);
+	}
+
+	analyzeContent() {
+		if (this.folder === 'sections') {
+			this.getSchema();
+		}
+		this.allTags = getLiquidTags(this.content);
+		this.tags = _.groupBy(this.allTags, 'type');
+		this.tags.snippet = [...(this.tags.include || []), ...(this.tags.render || [])];
+		this.tags.section = this.tags.section || [];
+		this.assets = {
+			tags: _.filter(this.allTags, 'hasAsset'),
+			urls: getAssetUrls(this.content),
+		};
+		this.analyzeIncludes();
+	}
+
+	getSchema() {
+		const json = this.content.match(REGEXP_SCHEMA_JSON);
+		this.content = _.replace(this.content, REGEXP_SCHEMA, '');
+		this.schema = {};
+		if (!_.isEmpty(json)) {
+			try {
+				this.schema = JSON.parse(json);
+			} catch (error) {
+				console.log(`Schema parse error: sections/${this.filename}`);
+			}
+		} else {
+			console.log(`No schema found: sections/${this.filename}`);
+		}
+		this.hasPreset = !_.isEmpty(this.schema.presets);
+	}
+
+	analyzeIncludes() {
+		this.snippetUsed = _.filter(this.tags.snippet, (tag) => !_.isEmpty(tag.quoted));
+		this.snippetVars = _.filter(this.tags.snippet, (tag) => _.isEmpty(tag.quoted));
+		this.selfInclude = this.folder === 'snippets' && !_.isEmpty(_.find(this.tags.snippet, (tag) => (tag.quoted === this.basename || tag.quoted === this.filename)));
+		this.sectionUsed = _.filter(this.tags.section, (tag) => !_.isEmpty(tag.quoted));
+		this.sectionVars = _.filter(this.tags.section, (tag) => _.isEmpty(tag.quoted));
+	}
+
+	addRenderingFile(file, log) {
+		if (log) console.log(`${this.folder}/${this.filename} rendered in ${file.folder}/${file.filename}`);
+		this.renderedIn = this.renderedIn || [];
+		this.renderedIn = _.unionWith(this.renderedIn, [file], (f1, f2) => (
+			!_.isEmpty(f1) && !_.isEmpty(f2) && f1.folder === f2.folder && f1.filename === f2.filename));
+		this.isRendered = this.renderedIn.length > 0;
+	}
+}
+
+module.exports = LiquidFile;
