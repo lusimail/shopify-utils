@@ -1,3 +1,3 @@
 const ShopifyTheme = require('./src/theme');
 
-module.exports = ShopifyTheme;
+module.exports.ShopifyTheme = ShopifyTheme;
