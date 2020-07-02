@@ -80,7 +80,7 @@ class ShopifyTheme {
 				const includeFile = this.getFile(compareFunc);
 				if (includeFile) {
 					includeFile.addRenderingFile(file);
-					tag.file = file; // eslint-disable-line
+					tag.file = includeFile; // eslint-disable-line
 				} else {
 					this[elseArray] = unionTags(this[elseArray], [tag]);
 				}

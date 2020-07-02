@@ -36,6 +36,10 @@ class LiquidFile {
 		this.isRendered = false;
 	}
 
+	isEqual(file) {
+		return this.folder === file.folder && this.filename === file.filename;
+	}
+
 	readFileContent() {
 		this.content = '';
 		try {
@@ -89,8 +93,43 @@ class LiquidFile {
 		if (log) console.log(`${this.folder}/${this.filename} rendered in ${file.folder}/${file.filename}`);
 		this.renderedIn = this.renderedIn || [];
 		this.renderedIn = _.unionWith(this.renderedIn, [file], (f1, f2) => (
-			!_.isEmpty(f1) && !_.isEmpty(f2) && f1.folder === f2.folder && f1.filename === f2.filename));
+			!_.isEmpty(f1) && !_.isEmpty(f2) && f1.isEqual(f2)));
 		this.isRendered = this.renderedIn.length > 0;
+	}
+
+	render() {
+		if (!_.isEmpty(this.renderedContent)) return this.renderedContent;
+		this.renderedContent = this.content;
+		this.renderedSnippetUsed = [];
+		this.renderedSectionUsed = [];
+		this.renderedAssets = {
+			tags: [...this.assets.tags],
+			urls: [...this.assets.urls],
+		};
+		const getRenderedResult = (tag, file, rendered) => {
+			this.renderedContent = _.replace(this.renderedContent, tag.tag, rendered);
+			this.renderedSnippetUsed = _.concat(this.renderedSnippetUsed, file.folder === 'snippets' ? [file] : [], file.renderedSnippetUsed);
+			this.renderedSectionUsed = _.concat(this.renderedSectionUsed, file.folder === 'sections' ? [file] : [], file.renderedSectionUsed);
+			this.renderedAssets.tags = _.concat(this.renderedAssets.tags, file.renderedAssets.tags);
+			this.renderedAssets.urls = _.concat(this.renderedAssets.urls, file.renderedAssets.urls);
+		};
+		_.forEach(this.snippetUsed, (tag) => {
+			if (tag.file) {
+				if (this.isEqual(tag.file)) {
+					this.renderedContent = _.replace(this.renderedContent, tag.tag, '<!-- loop include -->');
+				} else {
+					const rendered = tag.file.render();
+					getRenderedResult(tag, tag.file, rendered);
+				}
+			}
+		});
+		_.forEach(this.sectionUsed, (tag) => {
+			if (tag.file) {
+				const rendered = tag.file.render();
+				getRenderedResult(tag, tag.file, rendered);
+			}
+		});
+		return this.renderedContent;
 	}
 }
 
