@@ -8,10 +8,11 @@ const REGEXP_SCHEMA = /{%[\s-]*?schema[^]*?endschema[\s-]*?%}/g;
 const REGEXP_SCHEMA_JSON = /(?<={%[\s-]*?schema[\s-]*?%})[^]*?(?={%[\s-]*?endschema[\s-]*?%})/g;
 
 class LiquidFile {
-	constructor(folder, filename, path) {
-		this.path = path;
+	constructor(folder, filename, pathToTheme) {
+		this.pathToTheme = pathToTheme;
 		this.folder = folder;
 		this.filename = filename;
+		this.filepath = `${this.folder}/${this.filename}`;
 		if (_.includes(this.filename, 'scss.liquid')) {
 			this.basename = _.replace(this.filename, /scss.liquid$/, 'scss.css');
 		} else {
@@ -37,15 +38,15 @@ class LiquidFile {
 	}
 
 	isEqual(file) {
-		return this.folder === file.folder && this.filename === file.filename;
+		return this.filepath === file.filepath;
 	}
 
 	readFileContent() {
 		this.content = '';
 		try {
-			this.content = fs.readFileSync(`${this.path}/${this.filename}`, { encoding: 'utf-8' });
+			this.content = fs.readFileSync(`${this.pathToTheme}/${this.filepath}`, { encoding: 'utf-8' });
 		} catch (error) {
-			console.log(`Read file error ${this.folder}/${this.filename}: ${error}`);
+			console.log(`Read file error ${this.filepath}: ${error}`);
 		}
 		this.content = removeCommentBlock(this.content);
 	}
@@ -73,10 +74,10 @@ class LiquidFile {
 			try {
 				this.schema = JSON.parse(json);
 			} catch (error) {
-				console.log(`Schema parse error: sections/${this.filename}`);
+				console.log(`Schema parse error: ${this.filepath}`);
 			}
 		} else {
-			console.log(`No schema found: sections/${this.filename}`);
+			console.log(`No schema found: ${this.filepath}`);
 		}
 		this.hasPreset = !_.isEmpty(this.schema.presets);
 	}
@@ -90,7 +91,7 @@ class LiquidFile {
 	}
 
 	addRenderingFile(file, log) {
-		if (log) console.log(`${this.folder}/${this.filename} rendered in ${file.folder}/${file.filename}`);
+		if (log) console.log(`${this.filepath} rendered in ${file.filepath}`);
 		this.renderedIn = this.renderedIn || [];
 		this.renderedIn = _.unionWith(this.renderedIn, [file], (f1, f2) => (
 			!_.isEmpty(f1) && !_.isEmpty(f2) && f1.isEqual(f2)));

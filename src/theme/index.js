@@ -31,10 +31,9 @@ class ShopifyTheme {
 
 	readThemeFiles() {
 		_.forEach(FOLDER_THEME, (folder) => {
-			const path = `${this.pathToTheme}/${folder}`;
 			let filenames;
 			try {
-				filenames = fs.readdirSync(path);
+				filenames = fs.readdirSync(`${this.pathToTheme}/${folder}`);
 			} catch (error) {
 				console.log(`folder ${folder} error: ${error}`);
 				filenames = [];
@@ -45,7 +44,7 @@ class ShopifyTheme {
 			this.themeStats.totalFiles += filenames.length;
 
 			_.forEach(filenames, (filename) => {
-				this.themeFiles.push(new LiquidFile(folder, filename, path));
+				this.themeFiles.push(new LiquidFile(folder, filename, this.pathToTheme));
 			});
 		});
 		this.themeStats.assets.js = this.getFileCount({ assetType: 'js' });
@@ -101,6 +100,17 @@ class ShopifyTheme {
 				});
 			}
 		});
+	}
+
+	renderFiles(...comparators) {
+		const files = _.flatten(_.map(comparators, (comp) => this.getFiles(comp)));
+		const renderedSectionUsed = _.flatten(_.map(files, 'renderedSectionUsed'));
+		const renderedSnippetUsed = _.flatten(_.map(files, 'renderedSnippetUsed'));
+		return {
+			files,
+			renderedSectionUsed,
+			renderedSnippetUsed,
+		};
 	}
 
 	// compileFile(folder, file) {
