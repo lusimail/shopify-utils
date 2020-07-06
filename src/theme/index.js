@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const fs = require('fs');
+const minimatch = require('minimatch');
 const LiquidFile = require('./liquid');
 const { unionTags } = require('./helper');
 
@@ -52,12 +53,27 @@ class ShopifyTheme {
 		this.themeStats.assets.other = this.getFileCount({ assetType: 'other' });
 	}
 
+	searchFunc(comparator) {
+		if (_.isObject(comparator)) {
+			return (f) => {
+				let result = true;
+				_.forEach(comparator, (val, key) => {
+					if (_.isString(val) && _.isString(f[key])) {
+						result = result && minimatch(f[key], val);
+					} else result = result && f[key] === val;
+				});
+				return result;
+			};
+		}
+		return comparator;
+	}
+
 	getFile(comparator) {
-		return _.find(this.themeFiles, comparator);
+		return _.find(this.themeFiles, this.searchFunc(comparator));
 	}
 
 	getFiles(comparator) {
-		return _.filter(this.themeFiles, comparator);
+		return _.filter(this.themeFiles, this.searchFunc(comparator));
 	}
 
 	getFileCount(comparator) {
