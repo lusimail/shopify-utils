@@ -104,6 +104,7 @@ class ShopifyTheme {
 
 	renderFiles(...comparators) {
 		const files = _.flatten(_.map(comparators, (comp) => this.getFiles(comp)));
+		_.forEach(files, (file) => { file.render(); });
 		const renderedSectionUsed = _.flatten(_.map(files, 'renderedSectionUsed'));
 		const renderedSnippetUsed = _.flatten(_.map(files, 'renderedSnippetUsed'));
 		return {
