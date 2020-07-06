@@ -1,6 +1,6 @@
 {
   "name": "shopify-utils",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Utility scripts for Shopify",
   "main": "index.js",
   "scripts": {
