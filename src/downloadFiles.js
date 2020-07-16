@@ -7,7 +7,6 @@ const args = process.argv.slice(2);
 const pathToFile = args[0] || 'files/shopify-files-list.txt';
 const downloadFolder = args[1] || 'files/downloads';
 const pathToFile2 = args[2] || '';
-mkdirp.sync(downloadFolder);
 
 const fileContent = fs.readFileSync(pathToFile, { encoding: 'utf-8' });
 const allLinks = fileContent.split(',');
@@ -20,8 +19,9 @@ if (!_.isEmpty(pathToFile2) && fs.existsSync(pathToFile2)) {
 let downloadCount = 0;
 let successCount = 0;
 let errorCount = 0;
-const download = (url, filename) => {
-	const resultPath = `${downloadFolder}/${filename}`;
+const download = (url, filename, batch) => {
+	mkdirp.sync(`${downloadFolder}/${batch}`);
+	const resultPath = `${downloadFolder}/${batch}/${filename}`;
 	console.log('Download start:', filename);
 	downloadCount += 1;
 	return axios.get(url, { responseType: 'stream' })
@@ -52,13 +52,15 @@ const downloadAll = async (links, diffLinks = []) => {
 	_.forEach(diffLinks, (link) => {
 		diffFilenames.push(_.last(link.split('?')[0].split('/')));
 	});
+	let count = 0;
 	for (let i = 0; i < links.length; i += 1) {
 		const filename = _.last(links[i].split('?')[0].split('/'));
 		if (_.includes(diffFilenames, filename)) {
 			console.log(`${filename} already exist, not downloading`);
 		} else {
 			console.log(`File ${i}`);
-			await download(links[i], filename); // eslint-disable-line no-await-in-loop
+			await download(links[i], filename, Math.floor(count / 100)); // eslint-disable-line no-await-in-loop
+			count += 1;
 		}
 	}
 	console.log('Total download:', downloadCount, 'files');
