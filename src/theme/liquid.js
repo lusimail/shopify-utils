@@ -63,6 +63,14 @@ class LiquidFile {
 			tags: _.filter(this.allTags, 'hasAsset'),
 			urls: getAssetUrls(this.content),
 		};
+		if (_.includes(this.folder, 'templates')) {
+			if (!_.isEmpty(this.tags.layout)) {
+				const [layout] = this.tags.layout;
+				this.renderLayout = { name: layout.quoted || layout.included };
+			} else {
+				this.renderLayout = { name: 'theme' };
+			}
+		}
 		this.analyzeIncludes();
 	}
 
@@ -80,6 +88,9 @@ class LiquidFile {
 			console.log(`No schema found: ${this.filepath}`);
 		}
 		this.hasPreset = !_.isEmpty(this.schema.presets);
+		if (this.hasPreset) {
+			this.renderTemplate = { name: 'index' };
+		}
 	}
 
 	analyzeIncludes() {
@@ -104,8 +115,8 @@ class LiquidFile {
 		this.renderedSnippetUsed = [];
 		this.renderedSectionUsed = [];
 		this.renderedAssets = {
-			tags: [...this.assets.tags],
-			urls: [...this.assets.urls],
+			tags: [...(this.assets ? this.assets.tags : [])],
+			urls: [...(this.assets ? this.assets.urls : [])],
 		};
 		const getRenderedResult = (tag, file, rendered) => {
 			this.renderedContent = _.replace(this.renderedContent, tag.tag, rendered);
@@ -115,11 +126,14 @@ class LiquidFile {
 			this.renderedAssets.urls = _.concat(this.renderedAssets.urls, file.renderedAssets.urls);
 		};
 		_.forEach(this.snippetUsed, (tag) => {
+			// console.log('here', this.filepath, tag);
 			if (tag.file) {
+				// console.log('here2', tag.file);
 				if (this.isEqual(tag.file)) {
 					this.renderedContent = _.replace(this.renderedContent, tag.tag, '<!-- loop include -->');
 				} else {
 					const rendered = tag.file.render();
+					// console.log('here3', tag.file.filepath, !_.isEmpty(rendered));
 					getRenderedResult(tag, tag.file, rendered);
 				}
 			}
@@ -131,6 +145,32 @@ class LiquidFile {
 			}
 		});
 		return this.renderedContent;
+	}
+
+	renderWithLayout() {
+		if (!_.isEmpty(this.renderedContentWithLayout)) return this.renderedContentWithLayout;
+		if (_.isEmpty(this.renderedContent)) this.render();
+
+		this.renderedContentWithLayout = this.renderedContent;
+		const template = (!_.isEmpty(this.renderTemplate) && this.renderTemplate.file) || null;
+		let layout;
+		let templateContent = '{{ content_for_index }}';
+		let layoutContent = '{{ content_for_layout }}';
+
+		if (template) {
+			templateContent = template.render();
+			layout = (!_.isEmpty(template.renderLayout) && template.renderLayout.file) || null;
+		} else {
+			layout = (!_.isEmpty(this.renderLayout) && this.renderLayout.file) || null;
+		}
+
+		if (layout) layoutContent = layout.render();
+		// console.log(layoutContent);
+		let result = templateContent.replace(/\{\{\s*content_for_index\s*\}\}/g, this.renderedContent);
+		result = layoutContent.replace(/\{\{\s*content_for_layout\s*\}\}/g, result);
+		this.renderedContentWithLayout = result;
+
+		return this.renderedContentWithLayout;
 	}
 }
 

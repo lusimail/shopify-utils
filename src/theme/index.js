@@ -54,7 +54,7 @@ class ShopifyTheme {
 	}
 
 	searchFunc(comparator) {
-		if (_.isObject(comparator)) {
+		if (typeof comparator === 'object' && !_.isArray(comparator)) {
 			return (f) => {
 				let result = true;
 				_.forEach(comparator, (val, key) => {
@@ -87,6 +87,8 @@ class ShopifyTheme {
 		this.sectionNoFile = [];
 		this.assetNoFile = [];
 		this.assetUrlNoFile = [];
+		const defaultLayout = this.getFile({ folder: 'layout', basename: 'theme' });
+		const indexTemplate = this.getFile({ folder: 'templates', basename: 'index' });
 		_.forEach(this.getFiles((file) => (_.includes(FOLDER_TO_CHECK, file.folder))), (file) => {
 			if (!_.isEmpty(file.snippetVars)) this.snippetVars = unionTags(this.snippetVars, file.snippetVars);
 			if (!_.isEmpty(file.sectionVars)) this.sectionVars = unionTags(this.sectionVars, file.sectionVars);
@@ -100,6 +102,18 @@ class ShopifyTheme {
 					this[elseArray] = unionTags(this[elseArray], [tag]);
 				}
 			};
+
+			if (!_.isEmpty(file.renderLayout) && file.renderLayout.name !== 'none') {
+				if (file.renderLayout.name === 'theme') {
+					file.renderLayout.file = defaultLayout; // eslint-disable-line
+				} else {
+					const layout = this.getFile({ folder: 'layout', basename: file.renderLayout.name });
+					file.renderLayout.file = layout || defaultLayout; // eslint-disable-line
+				}
+			}
+			if (file.hasPreset) {
+				file.renderTemplate = { name: 'index', file: indexTemplate }; // eslint-disable-line
+			}
 
 			_.forEach(file.snippetUsed, (tag) => {
 				searchFile(tag, 'snippetNoFile', (f) => f.folder === 'snippets' && (tag.quoted === f.basename || tag.quoted === f.filename));
@@ -118,9 +132,9 @@ class ShopifyTheme {
 		});
 	}
 
-	renderFiles(...comparators) {
+	_render(comparators, useLayout = false) { // eslint-disable-line no-underscore-dangle
 		const files = _.flatten(_.map(comparators, (comp) => this.getFiles(comp)));
-		_.forEach(files, (file) => { file.render(); });
+		_.forEach(files, (file) => { if (useLayout) file.renderWithLayout(); else file.render(); });
 		const renderedSectionUsed = _.flatten(_.map(files, 'renderedSectionUsed'));
 		const renderedSnippetUsed = _.flatten(_.map(files, 'renderedSnippetUsed'));
 		return {
@@ -128,6 +142,14 @@ class ShopifyTheme {
 			renderedSectionUsed,
 			renderedSnippetUsed,
 		};
+	}
+
+	renderFiles(...comparators) {
+		return this._render(comparators, false); // eslint-disable-line no-underscore-dangle
+	}
+
+	renderFilesWithLayout(...comparators) {
+		return this._render(comparators, true); // eslint-disable-line no-underscore-dangle
 	}
 
 	// compileFile(folder, file) {

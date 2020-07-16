@@ -23,7 +23,7 @@ module.exports.getLiquidTags = (content) => {
 			const [type, included] = split;
 			result.type = type.toLowerCase();
 			result.split = split;
-			if (_.includes(['include', 'render', 'section'], result.type) && !_.isEmpty(included)) {
+			if (_.includes(['include', 'render', 'section', 'layout'], result.type) && !_.isEmpty(included)) {
 				const quoted = included.match(REGEXP_QUOTED);
 				result.included = included;
 				if (!_.isEmpty(quoted)) {
