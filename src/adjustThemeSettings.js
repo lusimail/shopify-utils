@@ -2,15 +2,17 @@ const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
 const config = require('config');
+const child = require('child_process');
+const mkdirp = require('mkdirp');
 const { getToFile } = require('./shopifyAdminApi');
 
 const args = process.argv.slice(2);
 const storeFrom = args[0];
-const storeTo = args[1];
-const settingFilePath = args[2];
+const themeKeyFrom = args[1];
+const storeTo = args[2];
 
-if (_.isEmpty(storeFrom) || _.isEmpty(storeFrom) || _.isEmpty(settingFilePath)) {
-	console.log('Example usage: npm run adjustThemeSettings <storeFrom> <storeTo> <settingFilePath>');
+if (_.isEmpty(storeFrom) || _.isEmpty(themeKeyFrom) || _.isEmpty(storeTo)) {
+	console.log('Example usage: npm run adjustThemeSettings <storeFrom> <themeKeyFrom> <storeTo>');
 	process.exit(1);
 }
 
@@ -21,6 +23,10 @@ if (_.isEmpty(authFrom)) {
 	console.log(`No authentications set for ${authFrom}`);
 	process.exit(1);
 }
+if (_.isEmpty(authFrom.themeId) || _.isEmpty(authFrom.themeId[themeKeyFrom])) {
+	console.log(`Theme Id ${themeKeyFrom} does not exist in ${authFrom}`);
+	process.exit(1);
+}
 if (_.isEmpty(authTo)) {
 	console.log(`No authentications set for ${authTo}`);
 	process.exit(1);
@@ -29,7 +35,6 @@ if (_.isEmpty(authTo)) {
 const files = {
 	productsFrom: path.resolve(`./files/products-${storeFrom}.json`),
 	collectionsFrom: path.resolve(`./files/collections-${storeFrom}.json`),
-	settingsFrom: settingFilePath,
 	productsTo: path.resolve(`./files/products-${storeTo}.json`),
 	collectionsTo: path.resolve(`./files/collections-${storeTo}.json`),
 	idMap: path.resolve(`./files/idMap-${storeFrom}-${storeTo}.json`),
@@ -57,12 +62,6 @@ const getData = (file, {
 	}
 };
 
-getData('settingsFrom', {
-	doOther() {
-		console.log(`${files.settingsFrom} does not exist`);
-		process.exit(1);
-	},
-});
 getData('idMap', { doOther() {} });
 getData('productsFrom', { auth: authFrom, urlPath: 'products.json', prop: 'products' });
 getData('productsTo', { auth: authTo, urlPath: 'products.json', prop: 'products' });
@@ -95,6 +94,11 @@ const createIdMap = () => {
 	fs.writeFileSync(files.idMap, JSON.stringify(data.idMap, null, 2));
 };
 
+console.log('Fetching settings_data.json');
+mkdirp(`files/${storeFrom}`);
+child.execSync(`theme download config/settings_data.json --password ${authFrom.apiPass} --store ${authFrom.hostname} -d files/${storeFrom} --themeid ${authFrom.themeId[themeKeyFrom]}`);
+data.settingsFrom = require(path.resolve(`./files/${storeFrom}/config/settings_data.json`));
+
 // console.log('promises.length', promises.length);
 Promise.all(promises)
 	.then(() => {
@@ -105,5 +109,11 @@ Promise.all(promises)
 		_.forEach(data.idMap, (newId, oldId) => {
 			newSettings = _.replace(newSettings, new RegExp(oldId, 'g'), newId);
 		});
-		fs.writeFileSync(`files/settings_data-${storeTo}.json`, newSettings);
+		mkdirp(`files/${storeTo}/config`);
+		console.log(`Saving ${storeTo} settings_data.json`);
+		fs.writeFileSync(`files/${storeTo}/config/settings_data.json`, newSettings);
+
+		// console.log(`Deploy ${storeTo} settings_data.json`);
+		// child.execSync(`theme deploy config/settings_data.json --password ${authTo.apiPass} --store ${authTo.hostname} -d files/${storeTo} --themeid ${authTo.themeId.live}`);
+		// child.execSync(`theme deploy config/settings_data.json --password ${authTo.apiPass} --store ${authTo.hostname} -d files/${storeTo} --themeid ${authTo.themeId.dev}`);
 	});
