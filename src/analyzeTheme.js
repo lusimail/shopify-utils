@@ -36,6 +36,7 @@ print('Snippet render non existent file', theme.snippetNoFile, 'content');
 print('Section includes with variables', theme.sectionVars, 'content');
 print('Section includes non existent file', theme.sectionNoFile, 'content');
 print('Snippets not rendered', theme.getFiles({ folder: 'snippets', isRendered: false }), 'filename');
+print('Snippets only used in 1 file', theme.getFiles((f) => f.folder === 'snippets' && f.isRendered && f.renderedIn.length <= 1), 'filename');
 print('Sections not rendered and not for homepage (no preset in schema)', theme.getFiles({ folder: 'sections', isRendered: false, hasPreset: false }), 'filename');
 print('Asset call with variable or non existent file', theme.assetNoFile, 'content');
 print('Asset urls with variable or non existent file', theme.assetUrlNoFile, 'content');
