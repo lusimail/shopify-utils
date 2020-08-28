@@ -3,12 +3,31 @@ const _ = require('lodash');
 const fs = require('fs');
 const mkdirp = require('mkdirp');
 
-const makeUrl = ({ apiKey, apiPass, hostname }, path) => `https://${apiKey}:${apiPass}@${hostname}/admin/api/2020-04/${path}`;
+const makeUrl = ({ apiKey, apiPass, hostname }, path) => `https://${apiKey}:${apiPass}@${hostname}/admin/api/2020-07/${path}`;
+
+const getNextPage = (prevData, url, link) => {
+	if (!_.includes(link, 'rel="next"')) return prevData;
+	const page_info = _.last(link.match(/(?<=page_info=)[^&>]*/g));
+	return axios({ method: 'get', url, params: { page_info, limit: 250 } })
+		.then((res) => {
+			const newData = prevData;
+			_.forEach(res.data, (v, k) => { newData[k] = _.concat(newData[k], res.data[k]); });
+			if (res.headers.link !== undefined) {
+				return getNextPage(newData, url, res.headers.link);
+			}
+			return newData;
+		});
+};
 
 const apiGet = (auth, path, param = {}) => {
 	const url = makeUrl(auth, path);
 	return axios({ method: 'get', url, params: { ...param, limit: 250 } })
-		.then((res) => res.data);
+		.then((res) => {
+			if (res.headers.link !== undefined) {
+				return getNextPage(res.data, url, res.headers.link);
+			}
+			return res.data;
+		});
 };
 
 const apiPost = (auth, path, data = {}) => {
