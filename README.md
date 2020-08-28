@@ -8,7 +8,7 @@
 ## Download images
 1. Get all files link with [this script](https://gist.github.com/freakdesign/a1636414cce682c2c444#file-get-all-files-from-shopify-admin-js)
 2. Put the .txt file in `files` folder
-3. Run `npm run downloadFiles [path/filename.txt] [path/download/folder]`
+3. Run `npm run downloadFiles [path/filename.txt] [path/download/folder] [path/filenames-to-not-download.txt]`
 
 ## Copy discount code
 This script will copy price rules that only have 1 discount codes.
