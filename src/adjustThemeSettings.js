@@ -10,6 +10,7 @@ const args = process.argv.slice(2);
 const storeFrom = args[0];
 const themeKeyFrom = args[1];
 const storeTo = args[2];
+const themeKeyTo = args[3];
 
 if (_.isEmpty(storeFrom) || _.isEmpty(themeKeyFrom) || _.isEmpty(storeTo)) {
 	console.log('Example usage: npm run adjustThemeSettings <storeFrom> <themeKeyFrom> <storeTo>');
@@ -109,11 +110,10 @@ Promise.all(promises)
 		_.forEach(data.idMap, (newId, oldId) => {
 			newSettings = _.replace(newSettings, new RegExp(oldId, 'g'), newId);
 		});
-		mkdirp(`files/${storeTo}/config`);
+		mkdirp.sync(`files/${storeTo}/config`);
 		console.log(`Saving ${storeTo} settings_data.json`);
 		fs.writeFileSync(`files/${storeTo}/config/settings_data.json`, newSettings);
 
 		// console.log(`Deploy ${storeTo} settings_data.json`);
-		// child.execSync(`theme deploy config/settings_data.json --password ${authTo.apiPass} --store ${authTo.hostname} -d files/${storeTo} --themeid ${authTo.themeId.live}`);
-		// child.execSync(`theme deploy config/settings_data.json --password ${authTo.apiPass} --store ${authTo.hostname} -d files/${storeTo} --themeid ${authTo.themeId.dev}`);
+		// child.execSync(`theme deploy config/settings_data.json --password ${authTo.apiPass} --store ${authTo.hostname} -d files/${storeTo} --themeid ${authTo.themeId[themeKeyTo]}`);
 	});
