@@ -9,7 +9,7 @@ const downloadFolder = args[1] || 'files/downloads';
 const pathToFile2 = args[2] || '';
 
 const fileContent = fs.readFileSync(pathToFile, { encoding: 'utf-8' });
-const allLinks = fileContent.split(',');
+const allLinks = fileContent.replace(/[\n ]/g, '').split(',');
 let linksToDiff = [];
 
 if (!_.isEmpty(pathToFile2) && fs.existsSync(pathToFile2)) {
