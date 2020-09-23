@@ -12,13 +12,17 @@ const {
 	action,
 	prop,
 	n: namespacesFile,
+	dry,
+	f: forceReplace,
 } = args;
 
 if (_.isEmpty(storeFrom) || (action === 'post' && _.isEmpty(storeTo))) {
 	console.log('Example usage 1: npm run getProductMetafields <storeFrom>');
-	console.log('Example usage 2: npm run postProductMetafields <storeFrom> <storeTo> -- -n <namespacesFile>');
+	console.log('Example usage 2: npm run postProductMetafields <storeFrom> <storeTo> -- -n <namespacesFile> [options]');
 	console.log('Example usage 3: npm run getCollectionMetafields <storeFrom>');
-	console.log('Example usage 4: npm run postCollectionMetafields <storeFrom> <storeTo> -- -n <namespacesFile>');
+	console.log('Example usage 4: npm run postCollectionMetafields <storeFrom> <storeTo> -- -n <namespacesFile> [options]');
+	console.log('--dry     Dry run');
+	console.log('-f        Force replace existing metafield');
 	process.exit(1);
 }
 
@@ -68,19 +72,26 @@ const doStuff = async () => {
 			const from = itemsFrom[k];
 			const to = _.find(itemsTo, { handle: from.handle });
 			if (!_.isEmpty(to)) {
-				// console.log(`${prop}: ${from.handle}`);
+				if (dry) {
+					console.log(`${prop}: ${from.handle}`);
+				}
 				const metasFrom = data.metasFrom[from.id];
 				const metasTo = data.metasTo[to.id];
-				const toPost = _.filter(metasFrom, (meta) => _.includes(namespaces, meta.namespace));
+				const toPost = _.filter(metasFrom, (meta) => _.includes(namespaces, meta.namespace) || _.includes(namespaces, `${meta.namespace}.${meta.key}`));
 				let exist = 0;
 				let create = 0;
 				let error = 0;
 				for (let i = 0; i < toPost.length; i += 1) {
 					const meta = toPost[i];
 					const inMetasTo = _.find(metasTo, (m) => meta.namespace === m.namespace && meta.key === m.key);
-					if (!_.isEmpty(inMetasTo)) {
+					if (!_.isEmpty(inMetasTo) && !forceReplace) {
 						exist += 1;
-						// console.log(`Metafields exist: ${meta.namespace} ${meta.key}`);
+						if (dry) {
+							console.log(`Metafields exist: ${meta.namespace} ${meta.key}`);
+						}
+					} else if (dry) {
+						create += 1;
+						console.log(`To post: ${meta.namespace}.${meta.key}`);
 					} else {
 						const newMeta = {
 							metafield: {

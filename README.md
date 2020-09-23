@@ -47,23 +47,27 @@ npm run adjustThemeSettings store1 store2  ~/shopify-theme/config/settings_data.
 
 ## Migrate product or collection metafields
 1. Make sure you have `write_products` permission.
-2. Create file for namespaces to be migrated, new line separated. Example:
+2. Create file for namespaces or with key to be migrated, new line separated. Example:
 	```
 	namespace1
 	namespace2
-	namespace3
+	namespace3.key1
+	namespace3.key2
 	```
 3. (Optional) Run these to preview the existing metafields:
 	```
 	npm run getProductMetafields <storeFrom>
 	npm run getCollectionMetafields <storeFrom>
 	```
-4. Run these to migrate metafields:
+5. Run these to migrate metafields. By default, this command will not migrate the metafield that already exist in the destination store, run with `-f` to force migrate. Run with `--dry` to preview the metafields to be posted.
 	```
 	npm run postProductMetafields <storeFrom> <storeTo> -- -n <namespacesFile>
+	npm run postProductMetafields <storeFrom> <storeTo> -- -n <namespacesFile> [--dry] [-f]
 	npm run postCollectionMetafields <storeFrom> <storeTo> -- -n <namespacesFile>
+	npm run postCollectionMetafields <storeFrom> <storeTo> -- -n <namespacesFile> [--dry] [-f]
 
 	Example:
 	npm run postProductMetafields store1 store2 -- -n files/product-meta-namespaces.txt
 	npm run postCollectionMetafields store1 store2 -- -n files/coll-meta-namespaces.txt
+	npm run postCollectionMetafields store1 store2 -- -n files/coll-meta-namespaces.txt --dry -f
 	```
