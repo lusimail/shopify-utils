@@ -12,6 +12,8 @@ const {
 	action,
 	prop,
 	n: namespacesFile,
+	h: itemHandle,
+	v: verbose,
 	dry,
 	f: forceReplace,
 } = args;
@@ -23,6 +25,9 @@ if (_.isEmpty(storeFrom) || (action === 'post' && _.isEmpty(storeTo))) {
 	console.log('Example usage 4: npm run postCollectionMetafields <storeFrom> <storeTo> -- -n <namespacesFile> [options]');
 	console.log('--dry     Dry run');
 	console.log('-f        Force replace existing metafield');
+	console.log('-h        Product / Collection Handle');
+	console.log('-n        Namespaces to migrate');
+	console.log('-v        Verbose');
 	process.exit(1);
 }
 
@@ -55,66 +60,77 @@ const getMetafields = async (store, auth, items, forceFetch = false) => {
 	return metafields;
 };
 
+const postMetafields = async (fromItem, toItem, namespaces) => {
+	if (dry) {
+		console.log(`${prop}: ${fromItem.handle}`);
+	}
+	const metasFrom = data.metasFrom[fromItem.id];
+	const metasTo = data.metasTo[toItem.id];
+	const toPost = _.isEmpty(namespaces) ? metasFrom : _.filter(metasFrom, (meta) => _.includes(namespaces, meta.namespace) || _.includes(namespaces, `${meta.namespace}.${meta.key}`));
+	let exist = 0;
+	let create = 0;
+	let error = 0;
+	for (let i = 0; i < toPost.length; i += 1) {
+		const meta = toPost[i];
+		const inMetasTo = _.find(metasTo, (m) => meta.namespace === m.namespace && meta.key === m.key);
+		if (!_.isEmpty(inMetasTo) && !forceReplace) {
+			exist += 1;
+			if (dry || verbose) {
+				console.log(`Metafields exist: ${meta.namespace} ${meta.key}`);
+			}
+		} else if (dry) {
+			create += 1;
+			console.log(`To post: ${meta.namespace}.${meta.key}`);
+		} else {
+			const newMeta = {
+				metafield: {
+					namespace: meta.namespace,
+					key: meta.key,
+					value: meta.value,
+					value_type: meta.value_type,
+				},
+			};
+			// eslint-disable-next-line no-await-in-loop
+			await apiPost(authTo, `${prop}s/${toItem.id}/metafields.json`, newMeta)
+				// eslint-disable-next-line no-loop-func
+				.then(() => {
+					create += 1;
+					if (verbose) console.log(`Metafield created: ${meta.namespace} ${meta.key}`);
+				// eslint-disable-next-line no-loop-func
+				}).catch((err) => {
+					error += 1;
+					console.log(`Metafield error: ${meta.namespace} ${meta.key}`, JSON.stringify(err, null, 2));
+				});
+		}
+	}
+	console.log(`${prop}: ${fromItem.handle} ${exist} exist, ${create} create, ${error} error`);
+};
+
 const doStuff = async () => {
 	await getData();
-	const itemsFrom = prop === 'product' ? data.productsFrom : data.collectionsFrom;
-	const itemsTo = prop === 'product' ? data.productsTo : data.collectionsTo;
+	let itemsFrom = prop === 'product' ? data.productsFrom : data.collectionsFrom;
+	let itemsTo = prop === 'product' ? data.productsTo : data.collectionsTo;
+	if (!_.isEmpty(itemHandle)) {
+		itemsFrom = _.filter(itemsFrom, ['handle', itemHandle]);
+		itemsTo = _.filter(itemsTo, ['handle', itemHandle]);
+	}
 
 	data.metasFrom = await getMetafields(storeFrom, authFrom, itemsFrom);
 	if (!_.isEmpty(storeTo)) data.metasTo = await getMetafields(storeTo, authTo, itemsTo, true);
 
 	if (action === 'post') {
-		const content = fs.readFileSync(namespacesFile, { encoding: 'utf-8' });
-		const namespaces = content.split('\n');
-		_.remove(namespaces, _.isEmpty);
+		let namespaces = [];
+		if (!_.isEmpty(namespacesFile)) {
+			const content = fs.readFileSync(namespacesFile, { encoding: 'utf-8' });
+			namespaces = content.split('\n');
+			_.remove(namespaces, _.isEmpty);
+		}
 
 		for (let k = 0; k < itemsFrom.length; k += 1) {
 			const from = itemsFrom[k];
 			const to = _.find(itemsTo, { handle: from.handle });
 			if (!_.isEmpty(to)) {
-				if (dry) {
-					console.log(`${prop}: ${from.handle}`);
-				}
-				const metasFrom = data.metasFrom[from.id];
-				const metasTo = data.metasTo[to.id];
-				const toPost = _.filter(metasFrom, (meta) => _.includes(namespaces, meta.namespace) || _.includes(namespaces, `${meta.namespace}.${meta.key}`));
-				let exist = 0;
-				let create = 0;
-				let error = 0;
-				for (let i = 0; i < toPost.length; i += 1) {
-					const meta = toPost[i];
-					const inMetasTo = _.find(metasTo, (m) => meta.namespace === m.namespace && meta.key === m.key);
-					if (!_.isEmpty(inMetasTo) && !forceReplace) {
-						exist += 1;
-						if (dry) {
-							console.log(`Metafields exist: ${meta.namespace} ${meta.key}`);
-						}
-					} else if (dry) {
-						create += 1;
-						console.log(`To post: ${meta.namespace}.${meta.key}`);
-					} else {
-						const newMeta = {
-							metafield: {
-								namespace: meta.namespace,
-								key: meta.key,
-								value: meta.value,
-								value_type: meta.value_type,
-							},
-						};
-						// eslint-disable-next-line no-await-in-loop
-						await apiPost(authTo, `${prop}s/${to.id}/metafields.json`, newMeta)
-							// eslint-disable-next-line no-loop-func
-							.then(() => {
-								create += 1;
-								// console.log(`Metafield created: ${meta.namespace} ${meta.key}`);
-							// eslint-disable-next-line no-loop-func
-							}).catch((err) => {
-								error += 1;
-								console.log(`Metafield error: ${meta.namespace} ${meta.key}`, JSON.stringify(err, null, 2));
-							});
-					}
-				}
-				console.log(`${prop}: ${from.handle} ${exist} exist, ${create} create, ${error} error`);
+				postMetafields(from, to, namespaces);
 			}
 		}
 	}
