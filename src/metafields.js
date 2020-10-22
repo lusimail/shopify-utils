@@ -12,7 +12,10 @@ const {
 	action,
 	prop,
 	n: namespacesFile,
-	h: itemHandle,
+	handle: itemHandle,
+	handle2: itemHandleTo,
+	id: itemId,
+	id2: itemIdTo,
 	v: verbose,
 	dry,
 	f: forceReplace,
@@ -23,12 +26,15 @@ if (_.isEmpty(storeFrom) || (action === 'post' && _.isEmpty(storeTo))) {
 	console.log('Example usage 2: npm run postProductMetafields <storeFrom> <storeTo> -- -n <namespacesFile> [options]');
 	console.log('Example usage 3: npm run getCollectionMetafields <storeFrom>');
 	console.log('Example usage 4: npm run postCollectionMetafields <storeFrom> <storeTo> -- -n <namespacesFile> [options]');
-	console.log('--dry     Dry run');
-	console.log('-f        Force replace existing metafield');
-	console.log('-h        Product / Collection Handle');
-	console.log('-n        Namespaces to migrate');
-	console.log('-v        Verbose');
-	process.exit(1);
+	console.log('--dry         Dry run');
+	console.log('-f            Force replace existing metafield');
+	console.log('-v            Verbose');
+	console.log('-n            Namespaces to migrate');
+	console.log('--handle      Product / Collection Handle');
+	console.log('--handle2     Product / Collection Handle destination (same as above if not defined)');
+	console.log('--id          Product / Collection Id (will take priority over handle)');
+	console.log('--id2         Product / Collection Id destination (same as above if not defined, will take priority over handle)');
+	process.exit();
 }
 
 const authFrom = _.get(config, storeFrom);
@@ -110,9 +116,9 @@ const doStuff = async () => {
 	await getData();
 	let itemsFrom = prop === 'product' ? data.productsFrom : data.collectionsFrom;
 	let itemsTo = prop === 'product' ? data.productsTo : data.collectionsTo;
-	if (!_.isEmpty(itemHandle)) {
-		itemsFrom = _.filter(itemsFrom, ['handle', itemHandle]);
-		itemsTo = _.filter(itemsTo, ['handle', itemHandle]);
+	if (!_.isEmpty(itemHandle) || !_.isEmpty(itemId)) {
+		itemsFrom = _.filter(itemsFrom, ['handle', itemId || itemHandle]);
+		itemsTo = _.filter(itemsTo, ['handle', itemIdTo || itemId || itemHandleTo || itemHandle]);
 	}
 
 	data.metasFrom = await getMetafields(storeFrom, authFrom, itemsFrom);

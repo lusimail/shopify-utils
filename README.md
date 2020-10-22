@@ -71,3 +71,14 @@ npm run adjustThemeSettings store1 store2  ~/shopify-theme/config/settings_data.
 	npm run postCollectionMetafields store1 store2 -- -n files/coll-meta-namespaces.txt
 	npm run postCollectionMetafields store1 store2 -- -n files/coll-meta-namespaces.txt --dry -f
 	```
+6. All options available:
+	```
+	--dry         Dry run
+	-f            Force replace existing metafield
+	-v            Verbose
+	-n            Namespaces to migrate
+	--handle      Product / Collection Handle
+	--handle2     Product / Collection Handle destination (same as above if not defined)
+	--id          Product / Collection Id (will take priority over handle)
+	--id2         Product / Collection Id destination (same as above if not defined, will take priority over handle)
+	```
