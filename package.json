@@ -13,7 +13,9 @@
     "getProductMetafields": "node src/metafields.js --prop=product",
     "postProductMetafields": "node src/metafields.js --action=post --prop=product",
     "getCollectionMetafields": "node src/metafields.js --prop=collection",
-    "postCollectionMetafields": "node src/metafields.js --action=post --prop=collection"
+    "postCollectionMetafields": "node src/metafields.js --action=post --prop=collection",
+    "getPages": "node src/pages.js",
+    "postPages": "node src/pages.js --action=post"
   },
   "repository": {
     "type": "git",

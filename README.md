@@ -82,3 +82,12 @@ npm run adjustThemeSettings store1 store2  ~/shopify-theme/config/settings_data.
 	--id          Product / Collection Id (will take priority over handle)
 	--id2         Product / Collection Id destination (same as above if not defined, will take priority over handle)
 	```
+
+## Migrate pages
+```
+Example usage 1: npm run getPages <storeFrom>
+Example usage 2: npm run postPages <storeFrom> <storeTo> -- [options]
+--dry         Dry run
+-f            Force update existing pages
+-v            Verbose
+```

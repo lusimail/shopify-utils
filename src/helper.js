@@ -24,6 +24,11 @@ const settings = {
 		filename: (store, id) => `collection-${store}-${id}`,
 		prop: 'metafields',
 	},
+	pages: {
+		urlPath: () => 'pages.json',
+		filename: (store) => `pages-${store}`,
+		prop: 'pages',
+	},
 };
 
 const fetchData = async ({
@@ -31,6 +36,10 @@ const fetchData = async ({
 }) => {
 	let data;
 	const s = settings[prop];
+	if (_.isEmpty(s)) {
+		console.log(`Property ${prop} is not defined`);
+		return null;
+	}
 	const file = `./${folder}/${s.filename(store, ...ids)}.json`;
 	const filepath = path.resolve(file);
 	if (fs.existsSync(filepath) && !forceFetch) {
