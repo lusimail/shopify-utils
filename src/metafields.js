@@ -116,9 +116,15 @@ const doStuff = async () => {
 	await getData();
 	let itemsFrom = prop === 'product' ? data.productsFrom : data.collectionsFrom;
 	let itemsTo = prop === 'product' ? data.productsTo : data.collectionsTo;
-	if (!_.isEmpty(itemHandle) || !_.isEmpty(itemId)) {
-		itemsFrom = _.filter(itemsFrom, ['handle', itemId || itemHandle]);
-		itemsTo = _.filter(itemsTo, ['handle', itemIdTo || itemId || itemHandleTo || itemHandle]);
+	if (!_.isEmpty(itemId)) {
+		itemsFrom = _.filter(itemsFrom, ['id', itemId]);
+	} else if (!_.isEmpty(itemHandle)) {
+		itemsFrom = _.filter(itemsFrom, ['handle', itemHandle]);
+	}
+	if (!_.isEmpty(itemIdTo) || !_.isEmpty(itemId)) {
+		itemsTo = _.filter(itemsTo, ['id', itemIdTo || itemId]);
+	} else if (!_.isEmpty(itemHandleTo) || !_.isEmpty(itemHandle)) {
+		itemsTo = _.filter(itemsTo, ['handle', itemHandleTo || itemHandle]);
 	}
 
 	data.metasFrom = await getMetafields(storeFrom, authFrom, itemsFrom);
