@@ -16,6 +16,7 @@ const {
 	handle2: itemHandleTo,
 	id: itemId,
 	id2: itemIdTo,
+	folder,
 	v: verbose,
 	dry,
 	f: forceReplace,
@@ -34,6 +35,7 @@ if (_.isEmpty(storeFrom) || (action === 'post' && _.isEmpty(storeTo))) {
 	console.log('--handle2     Product / Collection Handle destination (same as above if not defined)');
 	console.log('--id          Product / Collection Id (will take priority over handle)');
 	console.log('--id2         Product / Collection Id destination (same as above if not defined, will take priority over handle)');
+	console.log('--folder      Path to folder for metafields');
 	process.exit();
 }
 
@@ -41,7 +43,8 @@ const authFrom = _.get(config, storeFrom);
 const authTo = _.get(config, storeTo);
 
 const data = {};
-mkdirp.sync('files/metafields');
+const metaFolder = folder || 'files/metafields';
+mkdirp.sync(metaFolder);
 
 const getData = async () => {
 	data.productsFrom = await fetchData({ store: storeFrom, auth: authFrom, prop: 'products' });
@@ -59,7 +62,7 @@ const getMetafields = async (store, auth, items, forceFetch = false) => {
 		const item = items[i];
 		// eslint-disable-next-line no-await-in-loop
 		const metas = await fetchData({
-			store, auth, prop: `${prop}Metafield`, ids: [item.id], folder: 'files/metafields', forceFetch,
+			store, auth, prop: `${prop}Metafield`, id: item.id, handle: item.handle, folder: metaFolder, forceFetch,
 		});
 		metafields[item.id] = metas;
 	}

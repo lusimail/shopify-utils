@@ -16,12 +16,12 @@ const settings = {
 	},
 	productMetafield: {
 		urlPath: (id) => `products/${id}/metafields.json`,
-		filename: (store, id) => `product-${store}-${id}`,
+		filename: (store, id, handle) => `product-${store}-${id}${handle ? `-${handle}` : ''}`,
 		prop: 'metafields',
 	},
 	collectionMetafield: {
 		urlPath: (id) => `collections/${id}/metafields.json`,
-		filename: (store, id) => `collection-${store}-${id}`,
+		filename: (store, id, handle) => `collection-${store}-${id}${handle ? `-${handle}` : ''}`,
 		prop: 'metafields',
 	},
 	pages: {
@@ -32,7 +32,7 @@ const settings = {
 };
 
 const fetchData = async ({
-	store, prop, auth, doOther, callback, folder = 'files', forceFetch = false, ids = [],
+	store, prop, auth, doOther, callback, folder = 'files', forceFetch = false, id: itemId, handle: itemHandle,
 }) => {
 	let data;
 	const s = settings[prop];
@@ -40,7 +40,7 @@ const fetchData = async ({
 		console.log(`Property ${prop} is not defined`);
 		return null;
 	}
-	const file = `./${folder}/${s.filename(store, ...ids)}.json`;
+	const file = `${folder}/${s.filename(store, itemId, itemHandle)}.json`;
 	const filepath = path.resolve(file);
 	if (fs.existsSync(filepath) && !forceFetch) {
 		console.log('Get existing data for', file);
@@ -48,7 +48,7 @@ const fetchData = async ({
 	} else if (_.isFunction(doOther)) {
 		return doOther();
 	} else {
-		const url = s.urlPath(...ids);
+		const url = s.urlPath(itemId);
 		console.log('Fetching from server:', file, 'urlPath:', url);
 		data = await getToFile(auth, url, null, s.prop, null, filepath);
 	}
