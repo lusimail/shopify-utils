@@ -116,12 +116,12 @@ const doStuff = async () => {
 	await getData();
 	let itemsFrom = prop === 'product' ? data.productsFrom : data.collectionsFrom;
 	let itemsTo = prop === 'product' ? data.productsTo : data.collectionsTo;
-	if (!_.isEmpty(itemId) || !_.isNull(itemId)) {
+	if (!_.isEmpty(itemId) || _.isInteger(itemId)) {
 		itemsFrom = _.filter(itemsFrom, ['id', itemId]);
 	} else if (!_.isEmpty(itemHandle)) {
 		itemsFrom = _.filter(itemsFrom, ['handle', itemHandle]);
 	}
-	if (!_.isEmpty(itemIdTo) || !_.isEmpty(itemId) || !_.isNull(itemIdTo) || !_.isNull(itemId)) {
+	if (!_.isEmpty(itemIdTo) || !_.isEmpty(itemId) || _.isInteger(itemIdTo) || _.isInteger(itemId)) {
 		itemsTo = _.filter(itemsTo, ['id', itemIdTo || itemId]);
 	} else if (!_.isEmpty(itemHandleTo) || !_.isEmpty(itemHandle)) {
 		itemsTo = _.filter(itemsTo, ['handle', itemHandleTo || itemHandle]);
