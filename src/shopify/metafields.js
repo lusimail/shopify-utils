@@ -60,7 +60,12 @@ class Metafields {
 		}
 
 		if (_.isEmpty(filtered)) return;
+		if (verbose) console.log(`Searching for ${handle}`);
 		const item = await this.store[resource].getBy('handle', handle);
+		if (_.isEmpty(item)) {
+			if (verbose) console.log(`${handle} item not found`);
+			return;
+		}
 
 		let create = 0;
 		let error = 0;
