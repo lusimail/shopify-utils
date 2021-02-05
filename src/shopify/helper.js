@@ -31,7 +31,7 @@ const settings = {
 	},
 	articlesMetafield: {
 		urlPath: (id) => `articles/${id}/metafields.json`,
-		filename: (id, handle) => `meta-articles-${handle}`,
+		filename: (id, handle) => `meta-article-${handle}`,
 		prop: 'metafields',
 	},
 	pages: {
