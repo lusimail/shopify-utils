@@ -35,5 +35,6 @@ module.exports = {
 		camelcase: 0,
 		'arrow-body-style': 1,
 		'class-methods-use-this': 0,
+		'no-await-in-loop': 0,
 	},
 };

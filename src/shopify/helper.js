@@ -4,6 +4,11 @@ const path = require('path');
 const { getToFile } = require('./adminApi');
 
 const settings = {
+	themes: {
+		urlPath: () => 'themes.json',
+		filename: () => 'themes',
+		prop: 'themes',
+	},
 	products: {
 		urlPath: () => 'products.json',
 		filename: () => 'products',
@@ -24,15 +29,35 @@ const settings = {
 		filename: (id, handle) => `meta-collection-${handle}`,
 		prop: 'metafields',
 	},
+	articlesMetafield: {
+		urlPath: (id) => `articles/${id}/metafields.json`,
+		filename: (id, handle) => `meta-articles-${handle}`,
+		prop: 'metafields',
+	},
 	pages: {
 		urlPath: () => 'pages.json',
 		filename: () => 'pages',
 		prop: 'pages',
 	},
+	blogs: {
+		urlPath: () => 'blogs.json',
+		filename: () => 'blogs',
+		prop: 'blogs',
+	},
+	articles: {
+		urlPath: (id) => `blogs/${id}/articles.json`,
+		filename: (id, handle) => `articles-${handle}`,
+		prop: 'articles',
+	},
+	redirects: {
+		urlPath: () => 'redirects.json',
+		filename: () => 'redirects',
+		prop: 'redirects',
+	},
 };
 
 const fetchData = async ({
-	prop, auth, doOther, callback, folder = 'files', forceFetch = false, id: itemId, handle: itemHandle,
+	prop, auth, doOther, callback, folder = 'files', forceFetch = false, id: itemId, handle: itemHandle, attrs = null,
 }) => {
 	let data;
 	const s = settings[prop];
@@ -50,7 +75,11 @@ const fetchData = async ({
 	} else {
 		const url = s.urlPath(itemId);
 		console.log('Fetching from server:', url, 'filePath:', file);
-		data = await getToFile(auth, url, null, s.prop, null, filepath);
+		data = await getToFile(auth, url, null, s.prop, attrs, filepath)
+			.catch((err) => {
+				console.log(`Fetch error: ${prop} ${itemId}`, JSON.stringify(err, null, 2));
+				throw new Error();
+			});
 	}
 	if (_.isFunction(callback)) { return callback(data); }
 	return data;

@@ -59,7 +59,6 @@ const postPage = async (pageFrom) => {
 			template_suffix: pageFrom.template_suffix,
 		},
 	};
-	// eslint-disable-next-line no-await-in-loop
 	const result = await apiPost(authTo, 'pages.json', newPage)
 		// eslint-disable-next-line no-loop-func
 		.then(() => {
@@ -86,14 +85,12 @@ const doStuff = async () => {
 			const from = data.pagesFrom[k];
 			const to = _.find(data.pagesTo, { handle: from.handle });
 			if (_.isEmpty(to)) {
-				// eslint-disable-next-line no-await-in-loop
 				const result = await postPage(from);
 				if (result) create += 1;
 				else error += 1;
 			} else {
 				exist += 1;
 				if (dry || verbose) console.log(`Page exist: ${from.handle}`);
-				// eslint-disable-next-line no-await-in-loop
 				if (forceReplace) await postPage(from);
 			}
 		}

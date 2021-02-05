@@ -5,6 +5,7 @@ const { fetchData } = require('./helper');
 const validResources = [
 	'products',
 	'collections',
+	'articles',
 ];
 
 class Metafields {
@@ -32,7 +33,6 @@ class Metafields {
 		const resources = await this.store[resource].getAll();
 		for (let i = 0; i < resources.length; i += 1) {
 			const item = resources[i];
-			// eslint-disable-next-line no-await-in-loop
 			await this.getMetafields(resource, item);
 		}
 		return this[resource];
@@ -83,7 +83,6 @@ class Metafields {
 						value_type: meta.value_type,
 					},
 				};
-				// eslint-disable-next-line no-await-in-loop
 				await apiPost(this.store.getAuth(), `${resource}/${item.id}/metafields.json`, newMeta)
 					// eslint-disable-next-line no-loop-func
 					.then(() => {
@@ -105,7 +104,6 @@ class Metafields {
 		if (!_.includes(validResources, resource)) throw new Error(`Invalid Resource: ${resource}`);
 		const handles = _.keys(this[resource]);
 		for (let i = 0; i < handles.length; i += 1) {
-			// eslint-disable-next-line no-await-in-loop
 			await this.postMetafields({
 				resource,
 				handle: handles[i],

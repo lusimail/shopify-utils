@@ -36,6 +36,18 @@ const apiPost = (auth, path, data = {}) => {
 		.then((res) => res.data);
 };
 
+const apiPut = (auth, path, data = {}) => {
+	const url = makeUrl(auth, path);
+	return axios({ method: 'put', url, data })
+		.then((res) => res.data);
+};
+
+const apiDelete = (auth, path) => {
+	const url = makeUrl(auth, path);
+	return axios({ method: 'delete', url })
+		.then((res) => res.data);
+};
+
 const mapObj = (obj, props = []) => {
 	const newObj = {};
 	_.forEach(props, prop => {
@@ -67,5 +79,7 @@ const getToFile = (auth, path, param, prop, attrs, filePath) => getWithMap(auth,
 
 module.exports.apiGet = apiGet;
 module.exports.apiPost = apiPost;
+module.exports.apiDelete = apiDelete;
+module.exports.apiPut = apiPut;
 module.exports.getWithMap = getWithMap;
 module.exports.getToFile = getToFile;

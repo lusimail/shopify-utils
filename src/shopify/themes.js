@@ -1,14 +1,14 @@
 const _ = require('lodash');
 const { fetchData } = require('./helper');
 
-class Products {
+class Themes {
 	constructor(store) {
 		this.store = store;
 	}
 
-	async getAll(attrs = null) {
+	async getAll() {
 		this.items = await fetchData({
-			prop: 'products', auth: this.store.getAuth(), folder: this.store.path, attrs,
+			prop: 'themes', auth: this.store.getAuth(), folder: this.store.path,
 		});
 		return this.items;
 	}
@@ -19,4 +19,4 @@ class Products {
 	}
 }
 
-module.exports.Products = Products;
+module.exports.Themes = Themes;

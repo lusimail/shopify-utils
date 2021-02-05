@@ -1,5 +1,9 @@
+const { Themes } = require('./themes');
 const { Products } = require('./products');
 const { Collections } = require('./collections');
+const { Blogs } = require('./blogs');
+const { Articles } = require('./articles');
+const { Redirects } = require('./redirects');
 const { Metafields } = require('./metafields');
 
 class Store {
@@ -10,8 +14,12 @@ class Store {
 		this.hostname = hostname;
 		this.path = path;
 
+		this.themes = new Themes(this);
 		this.products = new Products(this);
 		this.collections = new Collections(this);
+		this.blogs = new Blogs(this);
+		this.articles = new Articles(this);
+		this.redirects = new Redirects(this);
 		this.metafields = new Metafields(this);
 	}
 

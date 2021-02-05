@@ -59,7 +59,7 @@ const downloadAll = async (links, diffLinks = []) => {
 			console.log(`${filename} already exist, not downloading`);
 		} else {
 			console.log(`File ${i}`);
-			await download(links[i], filename, Math.floor(count / 100)); // eslint-disable-line no-await-in-loop
+			await download(links[i], filename, Math.floor(count / 100));
 			count += 1;
 		}
 	}
