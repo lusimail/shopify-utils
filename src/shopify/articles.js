@@ -19,8 +19,6 @@ class Articles {
 			id: blog.id,
 			handle: blog.handle,
 		});
-		// eslint-disable-next-line no-param-reassign
-		_.forEach(articles, (art) => { art.blog_id = blog.id; });
 		this.blogs[blogHandle] = articles;
 		return this.blogs[blogHandle];
 	}
