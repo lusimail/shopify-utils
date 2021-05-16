@@ -56,7 +56,7 @@ resultText += '\n\n\n';
 print('Snippets rendered', theme.getFiles({ folder: 'snippets', isRendered: true }), 'filename');
 print('Sections rendered', theme.getFiles({ folder: 'sections', isRendered: true }), 'filename');
 print('Sections with preset', theme.getFiles({ folder: 'sections', hasPreset: true }), 'filename');
-print('Sections with preset and active in homepage', theme.getFiles({ folder: 'sections', hasPreset: true, inIndex: false }), 'filename');
+print('Sections with preset and active in homepage', theme.getFiles({ folder: 'sections', hasPreset: true, inIndex: true }), 'filename');
 print('JS files used', theme.getFiles({ folder: 'assets', assetType: 'js', isRendered: true }), 'filename');
 print('CSS files used', theme.getFiles({ folder: 'assets', assetType: 'css', isRendered: true }), 'filename');
 print('Other files used', theme.getFiles({ folder: 'assets', assetType: 'other', isRendered: true }), 'filename');
