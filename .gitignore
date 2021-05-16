@@ -5,3 +5,4 @@ node_modules
 config/*
 !config/default.example.js
 files
+store

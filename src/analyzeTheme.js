@@ -17,7 +17,7 @@ let resultText = '';
 const print = (title, items, prop = 'filename') => {
 	if (!_.isEmpty(items)) {
 		resultText += `${title} (${items.length}):\n`;
-		resultText += _.map(items, prop).join('\n');
+		resultText += (prop === false ? items : _.map(items, prop)).join('\n');
 		resultText += '\n\n\n';
 	}
 };
@@ -38,6 +38,10 @@ print('Section includes non existent file', theme.sectionNoFile, 'content');
 print('Snippets not rendered', theme.getFiles({ folder: 'snippets', isRendered: false }), 'filename');
 print('Snippets only used in 1 file', theme.getFiles((f) => f.folder === 'snippets' && f.isRendered && f.renderedIn.length <= 1), 'filename');
 print('Sections not rendered and not for homepage (no preset in schema)', theme.getFiles({ folder: 'sections', isRendered: false, hasPreset: false }), 'filename');
+print('Sections has preset but not rendered and not on homepage', theme.getFiles({
+	folder: 'sections', hasPreset: true, isRendered: false, inIndex: false,
+}), 'filename');
+print('Unused section settings (files does not exist or disabled)', theme.themeSettings.sectionSettingsUnused, false);
 print('Asset call with variable or non existent file', theme.assetNoFile, 'content');
 print('Asset urls with variable or non existent file', theme.assetUrlNoFile, 'content');
 print('JS files not called with `asset_url` or `cdn.shopify.com`', theme.getFiles({ folder: 'assets', assetType: 'js', isRendered: false }), 'filename');
@@ -52,6 +56,7 @@ resultText += '\n\n\n';
 print('Snippets rendered', theme.getFiles({ folder: 'snippets', isRendered: true }), 'filename');
 print('Sections rendered', theme.getFiles({ folder: 'sections', isRendered: true }), 'filename');
 print('Sections with preset', theme.getFiles({ folder: 'sections', hasPreset: true }), 'filename');
+print('Sections with preset and active in homepage', theme.getFiles({ folder: 'sections', hasPreset: true, inIndex: false }), 'filename');
 print('JS files used', theme.getFiles({ folder: 'assets', assetType: 'js', isRendered: true }), 'filename');
 print('CSS files used', theme.getFiles({ folder: 'assets', assetType: 'css', isRendered: true }), 'filename');
 print('Other files used', theme.getFiles({ folder: 'assets', assetType: 'other', isRendered: true }), 'filename');

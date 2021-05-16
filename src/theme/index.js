@@ -2,24 +2,18 @@ const _ = require('lodash');
 const fs = require('fs');
 const minimatch = require('minimatch');
 const LiquidFile = require('./liquid');
+const SettingsData = require('./settings-data');
 const { unionTags } = require('./helper');
 
-const FOLDER_THEME = ['assets', 'config', 'layout', 'locales', 'sections', 'snippets', 'templates', 'templates/customers'];
+const FOLDER_THEME = ['assets', /* 'config', */ 'layout', 'locales', 'sections', 'snippets', 'templates', 'templates/customers'];
 const FOLDER_TO_CHECK = ['assets', 'layout', 'sections', 'snippets', 'templates', 'templates/customers'];
-const REGEXP_JS = /(.js|.js.liquid)$/g;
-const REGEXP_CSS = /(.css|.css.liquid|.scss|.scss.liquid)$/g;
-const REGEXP_LIQUID_TAG = /{%[^]*?%}/g;
-const REGEXP_ASSET_TAG = /(?<={{|{%)[^}]*?\|\s{0,3}(asset_url|asset_img_url)(?=[^a-z_-]?.*?(}}|%}))/gi;
-const REGEXP_ASSET_URL = /cdn.shopify.com\/s\/files.*?\/assets\/[^?'")\n]*/g;
-const REGEXP_QUOTED = /(?<=['"`]).*?(?=['"`])/;
-const REGEXP_COMMENT = /{%[\s-]{0,3}comment[^]*?endcomment[\s-]{0,3}%}/g;
-const REGEXP_SCHEMA = /{%[\s-]{0,3}schema[^]*?endschema[\s-]{0,3}%}/g;
-const REGEXP_SCHEMA_JSON = /(?<={%[\s-]{0,3}schema[\s-]{0,3}%})[^]*?(?={%[\s-]{0,3}endschema[\s-]{0,3}%})/g;
+// const REGEXP_COMMENT = /{%[\s-]{0,3}comment[^]*?endcomment[\s-]{0,3}%}/g;
 
 class ShopifyTheme {
 	constructor(pathToTheme) {
 		this.pathToTheme = pathToTheme;
 		this.themeFiles = [];
+		this.themeSettings = {};
 		this.themeStats = {
 			folder: {},
 			assets: {},
@@ -31,6 +25,7 @@ class ShopifyTheme {
 	}
 
 	readThemeFiles() {
+		this.themeSettings = new SettingsData(this.pathToTheme);
 		_.forEach(FOLDER_THEME, (folder) => {
 			let filenames;
 			try {
@@ -113,6 +108,10 @@ class ShopifyTheme {
 			}
 			if (file.hasPreset) {
 				file.renderTemplate = { name: 'index', file: indexTemplate }; // eslint-disable-line
+				file.inIndex = this.themeSettings.indexSections.includes(file.basename); // eslint-disable-line
+			}
+			if (file.folder === 'sections') {
+				this.themeSettings.foundSections(file.basename);
 			}
 
 			_.forEach(file.snippetUsed, (tag) => {

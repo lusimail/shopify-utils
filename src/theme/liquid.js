@@ -89,6 +89,7 @@ class LiquidFile {
 		}
 		this.hasPreset = !_.isEmpty(this.schema.presets);
 		if (this.hasPreset) {
+			this.inIndex = false;
 			this.renderTemplate = { name: 'index' };
 		}
 	}
