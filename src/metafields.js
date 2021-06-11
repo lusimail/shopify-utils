@@ -38,7 +38,13 @@ const authTo = _.get(config, storeTo);
 
 const doStuff = async () => {
 	const store = new Store(storeFrom, authFrom.apiKey, authFrom.apiPass, authFrom.hostname, `files/${storeFrom}`);
-	await store.metafields.getAllMetafields(resource);
+	if (!_.isEmpty(itemId) || _.isInteger(itemId)) {
+		await store.metafields.getMetafields(resource, itemId, 'id');
+	} else if (!_.isEmpty(itemHandle)) {
+		await store.metafields.getMetafields(resource, itemHandle, 'handle');
+	} else {
+		await store.metafields.getAllMetafields(resource);
+	}
 
 	if (action === 'post') {
 		const store2 = (storeFrom === storeTo) ? store : new Store(storeTo, authTo.apiKey, authTo.apiPass, authTo.hostname, `files/${storeTo}`);

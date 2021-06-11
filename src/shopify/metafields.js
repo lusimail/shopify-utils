@@ -13,8 +13,12 @@ class Metafields {
 		this.store = store;
 	}
 
-	async getMetafields(resource, item) {
+	async getMetafields(resource, _item, itemBy) {
 		if (!_.includes(validResources, resource)) throw new Error(`Invalid Resource: ${resource}`);
+		let item = _item;
+		if (!_.isEmpty(itemBy)) {
+			item = await this.store[resource].getBy(itemBy, _item);
+		}
 		if (_.isEmpty(item)) throw new Error('Empty Resource');
 		this[resource] = this[resource] || {};
 		const metas = await fetchData({
