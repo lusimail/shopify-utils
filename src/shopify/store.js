@@ -5,6 +5,7 @@ const { Blogs } = require('./blogs');
 const { Articles } = require('./articles');
 const { Redirects } = require('./redirects');
 const { Metafields } = require('./metafields');
+const { Pages } = require('./pages');
 
 class Store {
 	constructor(name, apiKey, apiPass, hostname, path) {
@@ -21,6 +22,7 @@ class Store {
 		this.articles = new Articles(this);
 		this.redirects = new Redirects(this);
 		this.metafields = new Metafields(this);
+		this.pages = new Pages(this);
 	}
 
 	getAuth() {

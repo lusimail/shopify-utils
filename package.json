@@ -16,6 +16,8 @@
     "postCollectionMetafields": "node src/metafields.js --action=post --resource=collections",
     "getArticleMetafields": "node src/metafields.js --resource=articles",
     "postArticleMetafields": "node src/metafields.js --action=post --resource=articles",
+    "metaFromCsv": "node src/meta-from-csv.js",
+    "getStoreData": "node src/getStoreData.js",
     "getPages": "node src/pages.js",
     "postPages": "node src/pages.js --action=post"
   },
@@ -32,7 +34,8 @@
     "minimatch": "^3.0.4",
     "minimist": "^1.2.5",
     "mkdirp": "^1.0.4",
-    "moment": "^2.26.0"
+    "moment": "^2.26.0",
+    "papaparse": "^5.3.1"
   },
   "devDependencies": {
     "eslint": "^7.2.0",
