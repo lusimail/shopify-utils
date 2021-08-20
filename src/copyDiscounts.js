@@ -2,14 +2,20 @@ const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
 const config = require('config');
+const minimist = require('minimist');
 const { getToFile, apiGet, apiPost } = require('./shopifyAdminApi');
 
-const args = process.argv.slice(2);
-const storeFrom = args[0];
-const storeTo = args[1];
+const args = minimist(process.argv.slice(2));
+const {
+	_: [storeFrom, storeTo],
+	v: verbose,
+	dry,
+} = args;
 
 if (_.isEmpty(storeFrom) || _.isEmpty(storeFrom)) {
-	console.log('Example usage: npm run copyDiscounts <storeFrom> <storeTo>');
+	console.log('Example usage: npm run copyDiscounts <storeFrom> <storeTo> -- [options]');
+	console.log('--dry         Dry run');
+	console.log('-v            Verbose');
 	process.exit(1);
 }
 
@@ -26,62 +32,39 @@ if (_.isEmpty(authTo)) {
 }
 
 const files = {
-	productsFrom: path.resolve(`./files/products-${storeFrom}.json`),
-	collectionsFrom: path.resolve(`./files/collections-${storeFrom}.json`),
-	priceRulesFrom: path.resolve(`./files/priceRules-${storeFrom}.json`),
-	discountCodeFrom: path.resolve(`./files/discountCode-${storeFrom}.json`),
-	productsTo: path.resolve(`./files/products-${storeTo}.json`),
-	collectionsTo: path.resolve(`./files/collections-${storeTo}.json`),
-	priceRulesTo: path.resolve(`./files/priceRules-${storeTo}.json`),
-	discountCodeTo: path.resolve(`./files/discountCode-${storeTo}.json`),
+	productsFrom: path.resolve(`./files/${storeFrom}/products.json`),
+	collectionsFrom: path.resolve(`./files/${storeFrom}/collections.json`),
+	priceRulesFrom: path.resolve(`./files/${storeFrom}/price_rules.json`),
+	discountCodeFrom: path.resolve(`./files/${storeFrom}/discount_code.json`),
+	productsTo: path.resolve(`./files/${storeTo}/products.json`),
+	collectionsTo: path.resolve(`./files/${storeTo}/collections.json`),
+	priceRulesTo: path.resolve(`./files/${storeTo}/price_rules.json`),
+	discountCodeTo: path.resolve(`./files/${storeTo}/discount_code.json`),
 	idMap: path.resolve(`./files/idMap-${storeFrom}-${storeTo}.json`),
 };
 
 const data = {};
-const promises = [];
-const promises2 = [];
 
-const getData = (file, {
+const getData = async (file, {
 	auth, urlPath, prop, doOther, callback,
 }) => {
 	if (fs.existsSync(files[file])) {
 		console.log('Get existing data for', file);
 		data[file] = require(files[file]);
-		if (_.isFunction(callback)) callback(data[file]);
+		if (_.isFunction(callback)) {
+			await callback(data[file]);
+		}
 	} else if (_.isFunction(doOther)) {
-		doOther();
+		await doOther();
 	} else {
 		console.log('Fetching from server:', file, 'urlPath:', urlPath);
-		promises.push(getToFile(auth, urlPath, null, prop, null, files[file])
-			.then((result) => {
+		await getToFile(auth, urlPath, null, prop, null, files[file])
+			.then(async (result) => {
 				data[file] = result;
-				if (_.isFunction(callback)) callback(data[file]);
-			}));
+				if (_.isFunction(callback)) await callback(data[file]);
+			});
 	}
 };
-
-getData('idMap', { doOther() {} });
-getData('productsFrom', { auth: authFrom, urlPath: 'products.json', prop: 'products' });
-getData('productsTo', { auth: authTo, urlPath: 'products.json', prop: 'products' });
-getData('collectionsFrom', { auth: authFrom, urlPath: 'custom_collections.json', prop: 'custom_collections' });
-getData('collectionsTo', { auth: authTo, urlPath: 'custom_collections.json', prop: 'custom_collections' });
-getData('priceRulesFrom', {
-	auth: authFrom,
-	urlPath: 'price_rules.json',
-	prop: 'price_rules',
-	callback: (priceRules) => {
-		getData('discountCodeFrom', {
-			doOther() {
-				data.discountCodeFrom = {};
-				_.forEach(priceRules, (rule) => {
-					promises2.push(apiGet(authFrom, `price_rules/${rule.id}/discount_codes.json`)
-						.then((d) => { data.discountCodeFrom[rule.id] = d.discount_codes; }));
-				});
-			},
-		});
-	},
-});
-getData('priceRulesTo', { auth: authTo, urlPath: 'price_rules.json', prop: 'price_rules' });
 
 const createIdMap = () => {
 	console.log('Creating id map for products, variants and collections');
@@ -143,40 +126,63 @@ const makeRule = ({
 	};
 };
 
-// console.log('promises.length', promises.length);
-Promise.all(promises)
-	.then(() => {
-		// console.log('promises2.length', promises2.length);
-		return Promise.all(promises2);
-	})
-	.then(() => {
-		if (!_.isEmpty(data.discountCodeFrom)) {
-			fs.writeFileSync(files.discountCodeFrom, JSON.stringify(data.discountCodeFrom, null, 2));
-		}
-
-		console.log('store', storeFrom, 'products', data.productsFrom.length);
-		console.log('store', storeFrom, 'collections', data.collectionsFrom.length);
-		console.log('store', storeFrom, 'priceRules', data.priceRulesFrom.length);
-		console.log('store', storeTo, 'products', data.productsTo.length);
-		console.log('store', storeTo, 'collections', data.collectionsTo.length);
-		console.log('store', storeTo, 'priceRules', data.priceRulesTo.length);
-
-		if (_.isEmpty(data.idMap)) createIdMap();
-		// console.log(JSON.stringify(data.idMap, null, 2));
-
-		_.forEach(data.priceRulesFrom, (ruleFrom) => {
-			const discounts = data.discountCodeFrom[ruleFrom.id];
-			if (discounts.length > 1) {
-				console.log('Price rule:', ruleFrom.id, ruleFrom.title, 'have more than 1 discount code, possibly created from an app. Skipping rule.');
-			} else {
-				apiPost(authTo, 'price_rules.json', { price_rule: makeRule(ruleFrom) })
-					.then(({ price_rule: ruleTo }) => {
-						console.log('Price rule created:', ruleTo.id, ruleTo.title);
-						apiPost(authTo, `price_rules/${ruleTo.id}/discount_codes.json`, { discount_code: { code: ruleTo.title } })
-							.then(() => {
-								console.log('Discount code created:', ruleTo.title);
-							}).catch((err) => console.log('Discount code error:', ruleTo.title, err.toJSON()));
-					}).catch((err) => console.log('Price rule error:', ruleFrom.title, err.toJSON()));
-			}
-		});
+const doStuff = async () => {
+	await getData('idMap', { doOther() {} });
+	await getData('productsFrom', { auth: authFrom, urlPath: 'products.json', prop: 'products' });
+	await getData('productsTo', { auth: authTo, urlPath: 'products.json', prop: 'products' });
+	await getData('collectionsFrom', { auth: authFrom, urlPath: 'custom_collections.json', prop: 'custom_collections' });
+	await getData('collectionsTo', { auth: authTo, urlPath: 'custom_collections.json', prop: 'custom_collections' });
+	await getData('priceRulesFrom', {
+		auth: authFrom,
+		urlPath: 'price_rules.json',
+		prop: 'price_rules',
+		callback: async (priceRules) => {
+			await getData('discountCodeFrom', {
+				async doOther() {
+					data.discountCodeFrom = {};
+					for (let r = 0; r < priceRules.length; r += 1) {
+						const rule = priceRules[r];
+						console.log(`Get price rule ${rule.id}`);
+						await apiGet(authFrom, `price_rules/${rule.id}/discount_codes.json`)
+							.then((d) => { data.discountCodeFrom[rule.id] = d.discount_codes; });
+					}
+				},
+			});
+		},
 	});
+	await getData('priceRulesTo', { auth: authTo, urlPath: 'price_rules.json', prop: 'price_rules' });
+
+	if (!_.isEmpty(data.discountCodeFrom)) {
+		fs.writeFileSync(files.discountCodeFrom, JSON.stringify(data.discountCodeFrom, null, 2));
+	}
+
+	console.log('store', storeFrom, 'products', data.productsFrom.length);
+	console.log('store', storeFrom, 'collections', data.collectionsFrom.length);
+	console.log('store', storeFrom, 'priceRules', data.priceRulesFrom.length);
+	console.log('store', storeTo, 'products', data.productsTo.length);
+	console.log('store', storeTo, 'collections', data.collectionsTo.length);
+	console.log('store', storeTo, 'priceRules', data.priceRulesTo.length);
+
+	if (_.isEmpty(data.idMap)) createIdMap();
+	// console.log(JSON.stringify(data.idMap, null, 2));
+
+	_.forEach(data.priceRulesFrom, (ruleFrom) => {
+		const discounts = data.discountCodeFrom[ruleFrom.id];
+		if (discounts.length > 1) {
+			console.log('Price rule:', ruleFrom.id, ruleFrom.title, 'have more than 1 discount code, possibly created from an app. Skipping rule.');
+		} else if (dry) {
+			console.log('Price rule to create:', ruleFrom.id, ruleFrom.title);
+		} else {
+			apiPost(authTo, 'price_rules.json', { price_rule: makeRule(ruleFrom) })
+				.then(({ price_rule: ruleTo }) => {
+					console.log('Price rule created:', ruleTo.id, ruleTo.title);
+					apiPost(authTo, `price_rules/${ruleTo.id}/discount_codes.json`, { discount_code: { code: ruleTo.title } })
+						.then(() => {
+							console.log('Discount code created:', ruleTo.title);
+						}).catch((err) => console.log('Discount code error:', ruleTo.title, err.toJSON()));
+				}).catch((err) => console.log('Price rule error:', ruleFrom.title, err.toJSON()));
+		}
+	});
+}
+
+doStuff();

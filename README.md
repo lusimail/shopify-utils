@@ -15,8 +15,9 @@ This script will copy price rules that only have 1 discount codes.
 Price rules that have more than 1 discount code is possibly created by an app.<br>
 `Product Id`, `Variant Id` and `Collection Id` will be mapped to the new store's ids, but other settings will need to be set manually in the admin panel
 1. In your private app, make sure you have these permissions: `read_products`, `write_products`, `read_price_rules`, `write_price_rules`, `read_discounts`, `write_discounts`
-2. Run `npm run copyDiscounts <storeFrom> <storeTo>`. `<storeFrom>` and `<storeTo>` are the key you set in `config/default.js`. Example:
+2. Run `npm run copyDiscounts <storeFrom> <storeTo> -- [--dry]`. `<storeFrom>` and `<storeTo>` are the key you set in `config/default.js`. Example:
 	```
+	npm run copyDiscounts store1 store2 -- --dry
 	npm run copyDiscounts store1 store2
 	```
 
