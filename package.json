@@ -32,7 +32,7 @@
     "config": "^3.3.1",
     "lodash": "^4.17.19",
     "minimatch": "^3.0.4",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "mkdirp": "^1.0.4",
     "moment": "^2.26.0",
     "papaparse": "^5.3.1"
